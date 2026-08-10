@@ -1,8 +1,16 @@
 import { apiClient } from "./client";
-import type { Agent, AgentVisibility, AssetRole, Member } from "./types";
+import type { Agent, AgentListResponse, AgentSort, AgentVisibility, AssetRole, Member } from "./types";
 
-export async function listAgents(): Promise<Agent[]> {
-  const { data } = await apiClient.get<Agent[]>("/agents");
+export interface ListAgentsParams {
+  q?: string;
+  sort?: AgentSort;
+  visibility?: AgentVisibility;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listAgents(params: ListAgentsParams = {}): Promise<AgentListResponse> {
+  const { data } = await apiClient.get<AgentListResponse>("/agents", { params });
   return data;
 }
 

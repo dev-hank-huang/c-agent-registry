@@ -16,7 +16,7 @@ from app.db.base import get_db
 from app.models.agent import Agent
 from app.models.enums import AssetRole
 from app.models.user import User
-from app.schemas.agent import AgentCreate, AgentRead, AgentUpdate
+from app.schemas.agent import AgentCreate, AgentListResponse, AgentRead, AgentUpdate
 from app.schemas.user_agent_rel import MemberRead, MemberUpsert
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -46,20 +46,36 @@ async def create_agent(
     return AgentRead.model_validate(agent)
 
 
-@router.get("", response_model=list[AgentRead])
+@router.get("", response_model=AgentListResponse)
 async def list_agents(
+    q: str | None = None,
+    sort: str = "newest",
+    visibility: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[AgentRead]:
-    agents = await agent_crud.list_agents(db)
+) -> AgentListResponse:
+    agents = await agent_crud.list_agents(db, q=q, sort=sort)
     visible: list[Agent] = []
     for agent in agents:
         try:
             await ensure_agent_visible(db, agent, current_user)
         except HTTPException:
             continue
+        # Applied after the visibility check, not instead of it — this narrows an
+        # already-permitted set (e.g. Browse's "Public only" toggle), it never
+        # widens what a user is allowed to see.
+        if visibility is not None and agent.visibility.value != visibility:
+            continue
         visible.append(agent)
-    return [AgentRead.model_validate(a) for a in visible]
+    page = visible[offset : offset + limit]
+    return AgentListResponse(
+        items=[AgentRead.model_validate(a) for a in page],
+        total=len(visible),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{slug}", response_model=AgentRead)

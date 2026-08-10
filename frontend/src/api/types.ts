@@ -35,6 +35,15 @@ export interface Agent {
   updated_at: string;
 }
 
+export interface AgentListResponse {
+  items: Agent[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export type AgentSort = "newest" | "oldest" | "name";
+
 export interface Member {
   id: string;
   user_id: string;

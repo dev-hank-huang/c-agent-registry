@@ -24,10 +24,15 @@ export default function MyAgents() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm<CreateAgentFormValues>();
 
-  const { data: agents = [], isLoading } = useQuery({
-    queryKey: ["agents"],
-    queryFn: listAgents,
+  // GET /agents is now paginated (see Browse → Agents, Phase 3) — this page hasn't
+  // been migrated to a paginated UI itself yet (Phase 4), so it asks for a large
+  // page as a compatibility shim to keep today's "just show everything I own"
+  // behavior instead of silently truncating to the default page size.
+  const { data, isLoading } = useQuery({
+    queryKey: ["agents", "mine"],
+    queryFn: () => listAgents({ limit: 100 }),
   });
+  const agents = data?.items ?? [];
 
   const createMutation = useMutation({
     mutationFn: createAgent,

@@ -42,7 +42,7 @@ async def test_private_agent_hidden_from_unrelated_member(client, db_session):
     assert resp.status_code == 404
 
     resp = await client.get("/api/v1/agents", headers=auth_headers(stranger_token))
-    slugs = {a["slug"] for a in resp.json()}
+    slugs = {a["slug"] for a in resp.json()["items"]}
     assert "private-agent" not in slugs
 
 
@@ -267,9 +267,102 @@ async def test_editor_can_edit_but_only_owner_can_delete_agent(client, db_sessio
     assert resp.status_code == 404
 
     resp = await client.get("/api/v1/agents", headers=auth_headers(owner_token))
-    assert "agent-del" not in {a["slug"] for a in resp.json()}
+    assert "agent-del" not in {a["slug"] for a in resp.json()["items"]}
 
     resp = await client.get(
         "/api/v1/agents/agent-del/versions", headers=auth_headers(owner_token)
     )
     assert resp.status_code == 404
+
+
+async def test_list_agents_is_paginated_with_total_count(client, db_session):
+    await make_user(db_session, email="browser1@example.com", role=UserRole.member)
+    token = await login(client, "browser1@example.com")
+
+    for i in range(3):
+        resp = await client.post(
+            "/api/v1/agents",
+            headers=auth_headers(token),
+            json={"slug": f"page-agent-{i}", "name": f"Page Agent {i}", "visibility": "public"},
+        )
+        assert resp.status_code == 201
+
+    resp = await client.get("/api/v1/agents?limit=2&offset=0", headers=auth_headers(token))
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 3
+    assert body["limit"] == 2
+    assert body["offset"] == 0
+    assert len(body["items"]) == 2
+
+
+async def test_list_agents_search_matches_name_or_description(client, db_session):
+    await make_user(db_session, email="browser2@example.com", role=UserRole.member)
+    token = await login(client, "browser2@example.com")
+
+    await client.post(
+        "/api/v1/agents",
+        headers=auth_headers(token),
+        json={"slug": "search-target", "name": "Zebra Finder", "visibility": "public"},
+    )
+    await client.post(
+        "/api/v1/agents",
+        headers=auth_headers(token),
+        json={
+            "slug": "search-other",
+            "name": "Unrelated",
+            "description": "mentions zebra somewhere",
+            "visibility": "public",
+        },
+    )
+    await client.post(
+        "/api/v1/agents",
+        headers=auth_headers(token),
+        json={"slug": "search-miss", "name": "No match here", "visibility": "public"},
+    )
+
+    resp = await client.get("/api/v1/agents?q=zebra", headers=auth_headers(token))
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 2
+    assert {a["slug"] for a in body["items"]} == {"search-target", "search-other"}
+
+
+async def test_list_agents_sort_name_orders_alphabetically(client, db_session):
+    await make_user(db_session, email="browser3@example.com", role=UserRole.member)
+    token = await login(client, "browser3@example.com")
+
+    for name, slug in [("Charlie", "sort-c"), ("Alpha", "sort-a"), ("Bravo", "sort-b")]:
+        resp = await client.post(
+            "/api/v1/agents",
+            headers=auth_headers(token),
+            json={"slug": slug, "name": name, "visibility": "public"},
+        )
+        assert resp.status_code == 201
+
+    resp = await client.get("/api/v1/agents?sort=name", headers=auth_headers(token))
+    assert resp.status_code == 200
+    names = [a["name"] for a in resp.json()["items"]]
+    assert names == ["Alpha", "Bravo", "Charlie"]
+
+
+async def test_list_agents_visibility_filter_returns_only_public(client, db_session):
+    await make_user(db_session, email="browser4@example.com", role=UserRole.member)
+    token = await login(client, "browser4@example.com")
+
+    await client.post(
+        "/api/v1/agents",
+        headers=auth_headers(token),
+        json={"slug": "vis-public", "name": "Public One", "visibility": "public"},
+    )
+    await client.post(
+        "/api/v1/agents",
+        headers=auth_headers(token),
+        json={"slug": "vis-internal", "name": "Internal One", "visibility": "internal"},
+    )
+
+    resp = await client.get("/api/v1/agents?visibility=public", headers=auth_headers(token))
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["slug"] == "vis-public"

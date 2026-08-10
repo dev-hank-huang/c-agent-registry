@@ -6,6 +6,8 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import { AuthProvider } from "./auth/AuthContext";
 import "./global.css";
+import "./design-system/tokens.css";
+import "./design-system/components.css";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },

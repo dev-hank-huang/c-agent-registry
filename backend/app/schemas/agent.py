@@ -33,3 +33,10 @@ class AgentRead(BaseModel):
     created_by: uuid.UUID
     created_at: datetime
     updated_at: datetime
+
+
+class AgentListResponse(BaseModel):
+    items: list[AgentRead]
+    total: int
+    limit: int
+    offset: int

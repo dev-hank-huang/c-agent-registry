@@ -1,11 +1,20 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent import Agent
 from app.models.enums import AgentVisibility
+
+# Maps the API's `sort` query param to an ORDER BY clause. "newest" is the default —
+# matches a browse/catalog page's natural expectation (most-recently-added first)
+# rather than the previous hardcoded oldest-first order.
+_SORT_CLAUSES = {
+    "newest": Agent.created_at.desc(),
+    "oldest": Agent.created_at.asc(),
+    "name": Agent.name.asc(),
+}
 
 
 async def get_by_id(db: AsyncSession, agent_id: uuid.UUID) -> Agent | None:
@@ -22,10 +31,19 @@ async def get_by_slug(db: AsyncSession, slug: str) -> Agent | None:
     return result.scalar_one_or_none()
 
 
-async def list_agents(db: AsyncSession) -> list[Agent]:
-    result = await db.execute(
-        select(Agent).where(Agent.deleted_at.is_(None)).order_by(Agent.created_at)
-    )
+async def list_agents(db: AsyncSession, *, q: str | None = None, sort: str = "newest") -> list[Agent]:
+    # Returns every deleted_at-is-null agent matching `q` (unpaginated, visibility
+    # unfiltered) — the endpoint layer applies per-user visibility and offset/limit
+    # afterward, same split of responsibility the pre-existing per-agent visibility
+    # check already established. At this POC's scale that's an acceptable full-table
+    # scan; if the catalog grows large enough for that to matter, visibility should
+    # move into this query instead of staying a Python-side filter.
+    stmt = select(Agent).where(Agent.deleted_at.is_(None))
+    if q:
+        pattern = f"%{q}%"
+        stmt = stmt.where(or_(Agent.name.ilike(pattern), Agent.description.ilike(pattern)))
+    stmt = stmt.order_by(_SORT_CLAUSES.get(sort, _SORT_CLAUSES["newest"]))
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
