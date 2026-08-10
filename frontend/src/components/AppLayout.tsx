@@ -1,5 +1,7 @@
 import {
   AppstoreOutlined,
+  BarChartOutlined,
+  DatabaseOutlined,
   CompassOutlined,
   DownOutlined,
   LogoutOutlined,
@@ -59,6 +61,11 @@ export default function AppLayout() {
     if (path.startsWith("/admin/agent-summary")) return "admin-agent-summary";
     if (path.startsWith("/admin/agents")) return "admin-agents";
     if (path.startsWith("/admin/user-summary")) return "admin-user-summary";
+    if (path.startsWith("/admin/agent-templates")) return "admin-agent-templates";
+    if (path.startsWith("/admin/mcp-registry")) return "admin-mcp-registry";
+    if (path.startsWith("/admin/model-registry")) return "admin-model-registry";
+    if (path.startsWith("/admin/skillhub-registry")) return "admin-skillhub-registry";
+    if (path.startsWith("/admin/stats")) return "admin-stats";
     return "browse";
   }, [location.pathname]);
 
@@ -108,6 +115,23 @@ export default function AppLayout() {
               { key: "admin-agents", label: "Agents", onClick: () => go("/admin/agents") },
               { key: "admin-agent-summary", label: "Agent Summary", onClick: () => go("/admin/agent-summary") },
             ],
+          },
+          {
+            key: "registry",
+            icon: <DatabaseOutlined />,
+            label: "Registry",
+            children: [
+              { key: "admin-agent-templates", label: "Agent Templates", onClick: () => go("/admin/agent-templates") },
+              { key: "admin-mcp-registry", label: "MCP Registry", onClick: () => go("/admin/mcp-registry") },
+              { key: "admin-model-registry", label: "Model Registry", onClick: () => go("/admin/model-registry") },
+              { key: "admin-skillhub-registry", label: "SkillHub Registry", onClick: () => go("/admin/skillhub-registry") },
+            ],
+          },
+          {
+            key: "reports",
+            icon: <BarChartOutlined />,
+            label: "Reports",
+            children: [{ key: "admin-stats", label: "Statistics", onClick: () => go("/admin/stats") }],
           },
         ]
       : []),

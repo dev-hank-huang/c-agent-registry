@@ -6,16 +6,13 @@ import { decideReview, listReviewQueue } from "../api/reviews";
 import type { ReviewResult } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import Pagination from "../components/Pagination";
+import { formatFullDateTime } from "../lib/relativeTime";
 
 const STATUS_OPTIONS: { value: ReviewResult; label: string }[] = [
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
 ];
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
-}
 
 export default function ReviewQueue() {
   const { user } = useAuth();
@@ -128,7 +125,7 @@ export default function ReviewQueue() {
                     </span>
                     {item.signoff_by_name && (
                       <span style={{ color: "var(--fg-subtle)", fontSize: "var(--p-text-2xs)", marginLeft: "var(--p-space-1)" }}>
-                        by {item.signoff_by_name} · {formatDate(item.updated_at)}
+                        by {item.signoff_by_name} · {formatFullDateTime(item.updated_at)}
                       </span>
                     )}
                   </td>

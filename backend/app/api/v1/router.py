@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     auth,
     dependencies,
     mcps,
+    registry,
     reviews,
     skills,
     users,
@@ -22,3 +23,4 @@ api_router.include_router(reviews.router)
 api_router.include_router(skills.router)
 api_router.include_router(mcps.router)
 api_router.include_router(admin.router)
+api_router.include_router(registry.router)

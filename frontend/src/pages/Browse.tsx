@@ -7,24 +7,13 @@ import type { AgentSort } from "../api/types";
 import Avatar from "../components/Avatar";
 import Pagination from "../components/Pagination";
 import VisibilityBadge from "../components/VisibilityBadge";
+import { formatRelativeTime } from "../lib/relativeTime";
 
 const SORT_OPTIONS: { value: AgentSort; label: string }[] = [
   { value: "newest", label: "Newest" },
   { value: "oldest", label: "Oldest" },
   { value: "name", label: "Name (A–Z)" },
 ];
-
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "剛剛";
-  if (mins < 60) return `${mins} 分鐘前`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} 小時前`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} 天前`;
-  return new Date(iso).toLocaleDateString();
-}
 
 export default function Browse() {
   const [scope, setScope] = useState<"public" | "all">("public");
@@ -113,7 +102,7 @@ export default function Browse() {
               {agent.description && <p className="agent-card-description">{agent.description}</p>}
               <div className="agent-card-footer">
                 {agent.provider && <span>{agent.provider}</span>}
-                <span>Updated {timeAgo(agent.updated_at)}</span>
+                <span>Updated {formatRelativeTime(agent.updated_at)}</span>
               </div>
             </Link>
           ))}

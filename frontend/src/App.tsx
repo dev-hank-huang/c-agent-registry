@@ -3,7 +3,12 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 import AdminAgents from "./pages/AdminAgents";
 import AdminAgentSummary from "./pages/AdminAgentSummary";
+import AdminAgentTemplates from "./pages/AdminAgentTemplates";
+import AdminMcpRegistry from "./pages/AdminMcpRegistry";
+import AdminModelRegistry from "./pages/AdminModelRegistry";
 import AdminReviewSummary from "./pages/AdminReviewSummary";
+import AdminSkillHubRegistry from "./pages/AdminSkillHubRegistry";
+import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
 import AdminUserSummary from "./pages/AdminUserSummary";
 import AgentDetail from "./pages/AgentDetail";
@@ -75,6 +80,46 @@ export default function App() {
           element={
             <ProtectedRoute requireAdmin>
               <AdminAgentSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/agent-templates"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminAgentTemplates />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/mcp-registry"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminMcpRegistry />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/model-registry"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminModelRegistry />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/skillhub-registry"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminSkillHubRegistry />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/stats"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminStats />
             </ProtectedRoute>
           }
         />

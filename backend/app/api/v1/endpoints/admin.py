@@ -12,6 +12,7 @@ from app.models.user import User
 from app.schemas.admin import (
     AdminAgentItem,
     AdminAgentListResponse,
+    AdminStats,
     AgentSummary,
     ReviewSummary,
     TransferOwnerRequest,
@@ -28,6 +29,15 @@ async def review_summary(
 ) -> ReviewSummary:
     data = await admin_crud.get_review_summary(db)
     return ReviewSummary.model_validate(data)
+
+
+@router.get("/stats", response_model=AdminStats)
+async def stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.admin)),
+) -> AdminStats:
+    data = await admin_crud.get_stats(db)
+    return AdminStats.model_validate(data)
 
 
 @router.get("/user-summary", response_model=UserSummary)

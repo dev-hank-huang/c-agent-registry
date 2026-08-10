@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.models.enums import AgentVisibility
+from app.schemas.registry import RegistryStatus
 
 
 class TrendPoint(BaseModel):
@@ -84,6 +85,41 @@ class UserSummary(BaseModel):
 class VisibilityCount(BaseModel):
     visibility: AgentVisibility
     count: int
+
+
+class StatsTrends(BaseModel):
+    agentsCreatedByDay: list[TrendPoint]
+    reviewsApprovedByDay: list[TrendPoint]
+    reviewsRejectedByDay: list[TrendPoint]
+
+
+class StatsReviewGovernance(BaseModel):
+    approvedLast30Days: int
+    rejectedLast30Days: int
+    averageReviewTimeHours: float | None
+
+
+class AdminStats(BaseModel):
+    """The one page that rolls up every other admin summary's headline numbers —
+    "Needs attention" cards deep-link to whichever full summary page has the
+    concerning number. No Usage section (downloads/ratings) like the reference
+    repo's Statistics page has — this repo tracks neither download counts nor
+    ratings anywhere (no download-event log, no Rating model at all). The one real
+    usage figure available, actual artifact storage bytes in MinIO, stands on its
+    own instead."""
+
+    agentsTotal: int
+    agentsByVisibility: list[VisibilityCount]
+    agentsWithoutProductionCount: int
+    versionsByStatus: dict[str, int]
+    usersTotal: int
+    usersByRole: UserByRole
+    disabledUsersCount: int
+    pendingReviewCount: int
+    registryStatus: dict[str, RegistryStatus]
+    trends: StatsTrends
+    reviewGovernance: StatsReviewGovernance
+    artifactStorageBytes: int
 
 
 class AgentSummary(BaseModel):

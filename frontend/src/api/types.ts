@@ -123,12 +123,58 @@ export interface UserSummary {
   topReviewers: { userId: string; userName: string; reviewCount: number }[];
 }
 
+export interface AdminStats {
+  agentsTotal: number;
+  agentsByVisibility: { visibility: AgentVisibility; count: number }[];
+  agentsWithoutProductionCount: number;
+  versionsByStatus: Record<string, number>;
+  usersTotal: number;
+  usersByRole: { admin: number; reviewer: number; member: number };
+  disabledUsersCount: number;
+  pendingReviewCount: number;
+  registryStatus: Record<string, RegistryStatus>;
+  trends: {
+    agentsCreatedByDay: TrendPoint[];
+    reviewsApprovedByDay: TrendPoint[];
+    reviewsRejectedByDay: TrendPoint[];
+  };
+  reviewGovernance: {
+    approvedLast30Days: number;
+    rejectedLast30Days: number;
+    averageReviewTimeHours: number | null;
+  };
+  artifactStorageBytes: number;
+}
+
 export interface AgentSummary {
   total: number;
   withProduction: number;
   withoutProduction: number;
   withoutAnyVersion: number;
   byVisibility: { visibility: AgentVisibility; count: number }[];
+}
+
+export type RegistrySource = "agent-templates" | "mcp-registry" | "model-registry" | "skillhub-registry";
+
+export interface RegistryItem {
+  id: string;
+  name: string;
+  version: string | null;
+  category: string | null;
+  deprecated: boolean;
+  last_seen_at: string | null;
+}
+
+export interface RegistryStatus {
+  total_count: number;
+  last_synced_at: string | null;
+  consecutive_failures: number;
+  stale_count: number;
+}
+
+export interface RegistryOverview {
+  status: RegistryStatus;
+  items: RegistryItem[];
 }
 
 export interface ReviewerCandidate {

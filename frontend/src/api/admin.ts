@@ -1,5 +1,10 @@
 import { apiClient } from "./client";
-import type { AdminAgentItem, AdminAgentListResponse, AgentSort, AgentSummary, UserSummary } from "./types";
+import type { AdminAgentItem, AdminAgentListResponse, AdminStats, AgentSort, AgentSummary, UserSummary } from "./types";
+
+export async function getStats(): Promise<AdminStats> {
+  const { data } = await apiClient.get<AdminStats>("/admin/stats");
+  return data;
+}
 
 export async function getUserSummary(): Promise<UserSummary> {
   const { data } = await apiClient.get<UserSummary>("/admin/user-summary");

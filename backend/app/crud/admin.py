@@ -3,12 +3,15 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import Integer, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
+from app.crud import registry as registry_crud
 from app.models.agent import Agent
 from app.models.agent_version import AgentVersion
 from app.models.enums import AssetRole, ReviewResult, UserRole, UserStatus, VersionStatus
 from app.models.review import Review
 from app.models.user import User
 from app.models.user_agent_rel import UserAgentRel
+from app.services.storage import total_bucket_bytes
 
 _AGENT_SORT_CLAUSES = {
     "newest": Agent.created_at.desc(),
@@ -272,4 +275,51 @@ async def get_agent_summary(db: AsyncSession) -> dict:
         "withoutProduction": total - with_production,
         "withoutAnyVersion": without_any_version,
         "byVisibility": [{"visibility": row[0], "count": row[1]} for row in by_visibility_rows],
+    }
+
+
+async def get_stats(db: AsyncSession) -> dict:
+    since = datetime.now(timezone.utc) - timedelta(days=TREND_WINDOW_DAYS)
+    days = _day_range(TREND_WINDOW_DAYS)
+
+    agent_summary = await get_agent_summary(db)
+    user_summary = await get_user_summary(db)
+    review_summary = await get_review_summary(db)
+
+    versions_by_status_rows = (
+        await db.execute(select(AgentVersion.status, func.count()).group_by(AgentVersion.status))
+    ).all()
+    versions_by_status = {row[0].value: row[1] for row in versions_by_status_rows}
+
+    agents_created_by_day = await _user_counts_by_day(db, column=Agent.created_at, since=since)
+
+    registry_status = {
+        source: registry_crud.get_overview(source).status
+        for source in ("mcp-registry", "model-registry", "skillhub-registry")
+    }
+
+    settings = get_settings()
+    artifact_storage_bytes = total_bucket_bytes(settings.minio_packages_bucket)
+
+    return {
+        "agentsTotal": agent_summary["total"],
+        "agentsByVisibility": agent_summary["byVisibility"],
+        "agentsWithoutProductionCount": agent_summary["withoutProduction"],
+        "versionsByStatus": versions_by_status,
+        "usersTotal": user_summary["totalUsers"],
+        "usersByRole": user_summary["byRole"],
+        "disabledUsersCount": user_summary["disabledCount"],
+        "pendingReviewCount": review_summary["pendingCount"],
+        "registryStatus": registry_status,
+        "trends": {
+            "agentsCreatedByDay": [{"date": d, "count": agents_created_by_day.get(d, 0)} for d in days],
+            "reviewsApprovedByDay": review_summary["trends"]["approvedByDay"],
+            "reviewsRejectedByDay": review_summary["trends"]["rejectedByDay"],
+        },
+        "reviewGovernance": {
+            "approvedLast30Days": review_summary["last30Days"]["approved"],
+            "rejectedLast30Days": review_summary["last30Days"]["rejected"],
+            "averageReviewTimeHours": review_summary["averageReviewTimeHours"],
+        },
+        "artifactStorageBytes": artifact_storage_bytes,
     }

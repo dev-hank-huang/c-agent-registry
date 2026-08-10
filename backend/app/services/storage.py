@@ -52,6 +52,20 @@ def get_bytes(bucket: str, object_name: str) -> bytes:
         response.release_conn()
 
 
+def total_bucket_bytes(bucket: str) -> int:
+    """Real, not derived from any DB table — sums actual object sizes in MinIO. Used
+    by Statistics' "artifact storage" figure (this repo has no download-count or
+    rating tracking to report alongside it, unlike the reference repo's Usage
+    section — see AdminStats' docstring)."""
+    client = get_minio_client()
+    try:
+        if not client.bucket_exists(bucket):
+            return 0
+        return sum(obj.size or 0 for obj in client.list_objects(bucket, recursive=True))
+    except S3Error:
+        return 0
+
+
 def presigned_download_url(bucket: str, object_name: str, expires_minutes: int = 60) -> str:
     client = get_minio_client()
     return client.presigned_get_object(
