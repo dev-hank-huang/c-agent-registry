@@ -6,14 +6,14 @@ from app.models.enums import UserRole
 from app.models.user import User
 from app.schemas.registry import RegistryOverview, RegistryStatus
 
-# See app/schemas/registry.py's PLACEHOLDER note — these four routes mirror the
-# reference repo's Registry group (Agent Templates / MCP Registry / Model Registry /
-# SkillHub Registry) exactly, backed by an in-memory stub pending the real sync
-# integration. Declared as one shared route set (rather than four near-duplicate
-# routers) since all four are identically shaped.
+# See app/crud/registry.py's PLACEHOLDER note — these two routes (Agent Templates /
+# SkillHub Registry) are backed by an in-memory stub pending a real sync integration.
+# MCP and Model used to be placeholder sources here too; they now have their own real
+# availability-sync implementation instead (app/api/v1/endpoints/mcps.py, ai_models.py)
+# and were removed from this set rather than left as a second, fake source of truth.
 router = APIRouter(prefix="/admin", tags=["admin", "registry"])
 
-_SOURCES = ("agent-templates", "mcp-registry", "model-registry", "skillhub-registry")
+_SOURCES = ("agent-templates", "skillhub-registry")
 
 
 for _source in _SOURCES:

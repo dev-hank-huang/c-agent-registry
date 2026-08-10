@@ -7,7 +7,9 @@ from app.core.config import get_settings
 from app.crud import registry as registry_crud
 from app.models.agent import Agent
 from app.models.agent_version import AgentVersion
-from app.models.enums import AssetRole, ReviewResult, UserRole, UserStatus, VersionStatus
+from app.models.ai_model import AIModel
+from app.models.enums import AssetRole, AvailabilityStatus, ReviewResult, UserRole, UserStatus, VersionStatus
+from app.models.mcp import MCP
 from app.models.review import Review
 from app.models.user import User
 from app.models.user_agent_rel import UserAgentRel
@@ -278,6 +280,22 @@ async def get_agent_summary(db: AsyncSession) -> dict:
     }
 
 
+async def _availability_status(db: AsyncSession, model) -> dict:
+    total = (await db.execute(select(func.count()).select_from(model))).scalar_one()
+    unavailable = (
+        await db.execute(
+            select(func.count()).select_from(model).where(model.status == AvailabilityStatus.unavailable)
+        )
+    ).scalar_one()
+    last_synced_at = (await db.execute(select(func.max(model.last_synced_at)))).scalar_one()
+    return {
+        "total_count": total,
+        "last_synced_at": last_synced_at,
+        "consecutive_failures": 0,
+        "stale_count": unavailable,
+    }
+
+
 async def get_stats(db: AsyncSession) -> dict:
     since = datetime.now(timezone.utc) - timedelta(days=TREND_WINDOW_DAYS)
     days = _day_range(TREND_WINDOW_DAYS)
@@ -293,9 +311,16 @@ async def get_stats(db: AsyncSession) -> dict:
 
     agents_created_by_day = await _user_counts_by_day(db, column=Agent.created_at, since=since)
 
+    # "mcp"/"model" are real now (see app/api/v1/endpoints/mcps.py, ai_models.py) —
+    # shoehorned into the same RegistryStatus shape the placeholder sources use
+    # (total_count/last_synced_at/stale_count) since there's no real
+    # "consecutive_failures" concept for a probe that runs on demand rather than a
+    # background job; it's always 0 here, not fabricated data, just an unused field
+    # for these two sources.
     registry_status = {
-        source: registry_crud.get_overview(source).status
-        for source in ("mcp-registry", "model-registry", "skillhub-registry")
+        "skillhub-registry": registry_crud.get_overview("skillhub-registry").status,
+        "mcp": await _availability_status(db, MCP),
+        "model": await _availability_status(db, AIModel),
     }
 
     settings = get_settings()

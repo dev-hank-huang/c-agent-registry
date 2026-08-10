@@ -1,8 +1,8 @@
 import {
   AppstoreOutlined,
   BarChartOutlined,
-  DatabaseOutlined,
   CompassOutlined,
+  DatabaseOutlined,
   DownOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -57,13 +57,13 @@ export default function AppLayout() {
     if (path.startsWith("/admin/review-summary")) return "review-summary";
     if (path.startsWith("/reviews")) return "my-reviews";
     if (path.startsWith("/skills")) return "skills";
+    if (path.startsWith("/registry/mcps")) return "registry-mcps";
+    if (path.startsWith("/registry/models")) return "registry-models";
     if (path.startsWith("/admin/users")) return "admin-users";
     if (path.startsWith("/admin/agent-summary")) return "admin-agent-summary";
     if (path.startsWith("/admin/agents")) return "admin-agents";
     if (path.startsWith("/admin/user-summary")) return "admin-user-summary";
     if (path.startsWith("/admin/agent-templates")) return "admin-agent-templates";
-    if (path.startsWith("/admin/mcp-registry")) return "admin-mcp-registry";
-    if (path.startsWith("/admin/model-registry")) return "admin-model-registry";
     if (path.startsWith("/admin/skillhub-registry")) return "admin-skillhub-registry";
     if (path.startsWith("/admin/stats")) return "admin-stats";
     return "browse";
@@ -122,8 +122,8 @@ export default function AppLayout() {
             label: "Registry",
             children: [
               { key: "admin-agent-templates", label: "Agent Templates", onClick: () => go("/admin/agent-templates") },
-              { key: "admin-mcp-registry", label: "MCP Registry", onClick: () => go("/admin/mcp-registry") },
-              { key: "admin-model-registry", label: "Model Registry", onClick: () => go("/admin/model-registry") },
+              { key: "registry-mcps", label: "MCP", onClick: () => go("/registry/mcps") },
+              { key: "registry-models", label: "Model", onClick: () => go("/registry/models") },
               { key: "admin-skillhub-registry", label: "SkillHub Registry", onClick: () => go("/admin/skillhub-registry") },
             ],
           },

@@ -8,8 +8,8 @@ const COLOR_POSITIVE = "var(--chart-good)";
 const COLOR_NEGATIVE = "var(--chart-critical)";
 
 const REGISTRY_LABELS: Record<string, { title: string; path: string }> = {
-  "mcp-registry": { title: "MCP registry", path: "/admin/mcp-registry" },
-  "model-registry": { title: "Model registry", path: "/admin/model-registry" },
+  mcp: { title: "MCP", path: "/registry/mcps" },
+  model: { title: "Model", path: "/registry/models" },
   "skillhub-registry": { title: "SkillHub registry", path: "/admin/skillhub-registry" },
 };
 
@@ -48,14 +48,19 @@ export default function AdminStats() {
         <StatCard to="/admin/agent-summary" value={data.agentsWithoutProductionCount} label="Agents without an active version" />
         <StatCard to="/admin/user-summary" value={data.disabledUsersCount} label="Disabled users" />
         {Object.entries(data.registryStatus).map(([source, status]) => {
-          const meta = REGISTRY_LABELS[source] ?? { title: source, path: "/admin/mcp-registry" };
+          const meta = REGISTRY_LABELS[source] ?? { title: source, path: "/admin/skillhub-registry" };
+          // skillhub-registry is still the placeholder mirror — "unreachable syncs"
+          // (consecutive_failures) is its real signal. mcp/model are the real
+          // availability-sync implementation instead, where "stale" (unavailable)
+          // item count is the meaningful number; they have no sync-failure concept.
+          const isPlaceholder = source === "skillhub-registry";
           return (
             <StatCard
               key={source}
               to={meta.path}
-              value={status.consecutive_failures}
-              label={`${meta.title}: unreachable syncs`}
-              breakdown={`${status.stale_count} stale items`}
+              value={isPlaceholder ? status.consecutive_failures : status.stale_count}
+              label={isPlaceholder ? `${meta.title}: unreachable syncs` : `${meta.title}: unavailable items`}
+              breakdown={isPlaceholder ? `${status.stale_count} stale items` : `${status.total_count} total`}
             />
           );
         })}

@@ -3,21 +3,25 @@ from datetime import datetime, timezone
 from app.schemas.registry import RegistryOverview, RegistryStatus
 
 # --------------------------------------------------------------------------
-# PLACEHOLDER — no real external MCP/Model/SkillHub/Template system is wired
-# up here; this is in-process, non-persistent stub state so the four
-# Registry pages have something real to call and render while the actual
-# sync integration (owned elsewhere, per this session's direction) gets
-# connected later. Replace this module's body with real queries against
+# PLACEHOLDER — no real external Agent Template/SkillHub system is wired up
+# here; this is in-process, non-persistent stub state so these two Registry
+# pages have something real to call and render while a real sync integration
+# gets connected later. Replace this module's body with real queries against
 # whatever store the real sync job writes to — the function signatures
 # (`get_overview`, `trigger_resync`) are the contract the endpoints call,
 # keep those stable.
+#
+# MCP and Model used to be placeholder sources here too, but now resolve
+# against the real mcps/ai_models tables instead (their own availability-sync
+# implementation, not a mirrored-external-registry one) — see
+# app/api/v1/endpoints/mcps.py and ai_models.py.
 #
 # State is a plain module-level dict (resets on process restart, not shared
 # across workers) — enough to make "click Re-sync now, see the timestamp
 # update" demonstrable, not a real sync log.
 # --------------------------------------------------------------------------
 
-_SOURCES = ("agent-templates", "mcp-registry", "model-registry", "skillhub-registry")
+_SOURCES = ("agent-templates", "skillhub-registry")
 
 # "items" stays empty until the real sync integration populates it — nothing in this
 # module ever fabricates one. (Tests reach into this dict directly to simulate a

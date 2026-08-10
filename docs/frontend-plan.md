@@ -24,11 +24,11 @@
 
 ```
 api/            client.ts(axios instance) + types.ts + 每個 resource 一個檔案
-                (agents.ts, versions.ts, reviews.ts, skills.ts, users.ts, auth.ts)
+                (agents.ts, versions.ts, reviews.ts, skills.ts, models.ts, users.ts, auth.ts)
 auth/           AuthContext.tsx、ProtectedRoute.tsx
 components/     AppLayout.tsx（響應式外殼）、AgentsTable.tsx、tags.tsx（狀態/角色標籤）
 pages/          Login, SsoCallback, Browse, MyAgents, AgentDetail, VersionDetail,
-                Reviews, Skills, AdminUsers
+                Reviews, RegistrySkills, RegistryMcps, RegistryModels, AdminUsers
 App.tsx         路由表
 main.tsx        QueryClientProvider / ConfigProvider(主色 #4338CA) / AntD App / BrowserRouter / AuthProvider
 ```
@@ -48,8 +48,14 @@ main.tsx        QueryClientProvider / ConfigProvider(主色 #4338CA) / AntD App 
   `GET/POST/DELETE .../dependencies`、`POST .../submit`（帶 `reviewer_ids`）、
   `POST .../activate`、`.../deactivate`、`GET .../download`、`GET .../reviews`、`GET /reviewers` |
 | `/reviews` | 我的待審清單 | `GET /reviews/mine`、`POST /reviews/:id/decision` |
-| `/skills` | Skills（上傳檔案）/ MCP（建立）兩個 tab | `GET/POST /skills`（multipart）、`GET/POST /mcps` |
+| `/registry/skills` | Skill registry：清單（預設只顯示可用）+ 上傳 + 同步 | `GET/POST /skills`（multipart）、
+  `POST /skills/sync` |
+| `/registry/mcps` | MCP registry：清單（預設只顯示可用）+ 建立 + 同步 | `GET/POST /mcps`、`POST /mcps/sync` |
+| `/registry/models` | Model registry：清單（預設只顯示可用）+ 建立 + 同步 | `GET/POST /models`、
+  `POST /models/sync` |
 | `/admin/users` | 使用者管理，只有 `role=admin` 看得到這條路由/選單 | `GET/POST/PATCH /users` |
+
+`/registry/*` 三個頁面的細節設計（同步機制、可用狀態欄位）見 [registry-sync.md](registry-sync.md)。
 
 路由巢狀設計成 `/agents/:agentSlug/versions/:versionSlug` 而不是扁平的 `/versions/:versionSlug`，
 是因為 `AgentVersion` 本身沒有帶 agent 的 slug（只有 `agent_id`），巢狀路由讓麵包屑/返回連結不用
@@ -79,7 +85,10 @@ Browse
 Agent Management
   └ My Agents
 Reviews
-Skills & MCP
+Registry
+  ├ Skill
+  ├ MCP
+  └ Model
 Admin（僅 role=admin 顯示）
   └ 使用者管理
 ```

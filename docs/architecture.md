@@ -67,6 +67,11 @@ API（純前端 SPA，不是後端渲染）。技術選型細節、目錄結構�
   （"priorital" 不是英文字），直接照 "priority" 的意思實作。
 - Enum 都用 Postgres native enum（`SQLAlchemy Enum`），完整列表見
   [roles-and-permissions.md](roles-and-permissions.md) 與 `backend/app/models/enums.py`。
+- **`AIModel`（table `ai_models`）**：ERD 上沒有這張表，是後來新增的第三個 registry 實體（跟
+  `Skill`/`MCP` 平行，代表可供 agent 使用的 LLM 模型清單）。類別命名成 `AIModel` 而不是 `Model`，
+  是為了不要跟 `app.models` package、Pydantic 的 `BaseModel` 撞名。`Skill`/`MCP`/`AIModel` 三張表
+  都加了 `status`（`available`/`unavailable`）+ `last_synced_at`，設計細節見
+  [registry-sync.md](registry-sync.md)。
 
 ## Agent_Dependency 的多型設計
 

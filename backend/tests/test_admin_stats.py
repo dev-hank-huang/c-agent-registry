@@ -37,8 +37,8 @@ async def test_stats_aggregates_agents_versions_users_and_reviews(client, db_ses
     assert body["versionsByStatus"]["draft"] >= 1
     assert body["usersTotal"] >= 2
     assert body["usersByRole"]["admin"] >= 1
-    assert "mcp-registry" in body["registryStatus"]
-    assert "model-registry" in body["registryStatus"]
+    assert "mcp" in body["registryStatus"]
+    assert "model" in body["registryStatus"]
     assert "skillhub-registry" in body["registryStatus"]
     assert len(body["trends"]["agentsCreatedByDay"]) == 30
     assert "artifactStorageBytes" in body

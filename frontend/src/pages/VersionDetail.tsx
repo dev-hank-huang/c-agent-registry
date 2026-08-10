@@ -64,13 +64,12 @@ export default function VersionDetail() {
   });
   const skillsQuery = useQuery({ queryKey: ["skills"], queryFn: listSkills });
   const mcpsQuery = useQuery({ queryKey: ["mcps"], queryFn: listMcps });
-  // Registry-sourced options — see UI_AUDIT.md's registry-migration note. Currently
-  // always empty until the real sync integration lands (app/crud/registry.py), so
-  // these queries just contribute nothing to the picker below yet, not an error.
-  const mcpRegistryQuery = useQuery({
-    queryKey: ["admin-registry", "mcp-registry"],
-    queryFn: () => getRegistryOverview("mcp-registry"),
-  });
+  // Skill's registry-sourced options — see UI_AUDIT.md's registry-migration note.
+  // Currently always empty until the real sync integration lands
+  // (app/crud/registry.py), so this query just contributes nothing to the picker
+  // below yet, not an error. MCP has no equivalent — it resolves against the real
+  // mcps table (with its own available/unavailable sync) instead, see the dependency
+  // picker below.
   const skillhubRegistryQuery = useQuery({
     queryKey: ["admin-registry", "skillhub-registry"],
     queryFn: () => getRegistryOverview("skillhub-registry"),
@@ -92,11 +91,6 @@ export default function VersionDetail() {
     () => new Map((skillhubRegistryQuery.data?.items ?? []).map((i) => [i.id, i.name])),
     [skillhubRegistryQuery.data],
   );
-  const mcpRegistryItemNameById = useMemo(
-    () => new Map((mcpRegistryQuery.data?.items ?? []).map((i) => [i.id, i.name])),
-    [mcpRegistryQuery.data],
-  );
-
   const invalidateVersion = () => {
     queryClient.invalidateQueries({ queryKey: ["version", versionSlug] });
     queryClient.invalidateQueries({ queryKey: ["agent-versions", agentSlug] });
@@ -325,9 +319,11 @@ export default function VersionDetail() {
             {depsQuery.data && depsQuery.data.length > 0 ? (
               <Space wrap>
                 {depsQuery.data.map((d) => {
+                  // "registry" source only ever applies to skill dependencies now (see
+                  // the picker above) — an mcp/registry row could only exist from before
+                  // this reconciliation, and falls back to the dependency_id itself.
                   const legacyName = d.type === "skill" ? skillNameById.get(d.dependency_id) : mcpNameById.get(d.dependency_id);
-                  const registryName =
-                    d.type === "skill" ? skillhubItemNameById.get(d.dependency_id) : mcpRegistryItemNameById.get(d.dependency_id);
+                  const registryName = d.type === "skill" ? skillhubItemNameById.get(d.dependency_id) : undefined;
                   const label = (d.source === "registry" ? registryName : legacyName) ?? d.dependency_id;
                   return (
                     <Tag
@@ -448,24 +444,36 @@ export default function VersionDetail() {
           <Form.Item noStyle shouldUpdate={(prev, cur) => prev.type !== cur.type}>
             {({ getFieldValue }) => {
               const type: DependencyType = getFieldValue("type");
-              const legacyOptions =
-                type === "skill"
-                  ? (skillsQuery.data ?? []).map((s) => ({ value: `legacy:${s.id}`, label: `${s.name} v${s.version}` }))
-                  : (mcpsQuery.data ?? []).map((m) => ({ value: `legacy:${m.id}`, label: `${m.name} v${m.version}` }));
-              const registryItems = type === "skill" ? skillhubRegistryQuery.data?.items : mcpRegistryQuery.data?.items;
-              const registryOptions = (registryItems ?? []).map((i) => ({
+              // MCP no longer has a separate "registry" source — it resolves against
+              // the mcps table directly, now filtered to available (synced) ones, same
+              // as the reference PR's approach. Skill keeps the legacy/registry group
+              // split (SkillHub Registry is still a distinct external mirror), and also
+              // picks up the same available-only filter on its legacy group now that
+              // Skill carries a status field too.
+              if (type === "mcp") {
+                const mcpOptions = (mcpsQuery.data ?? [])
+                  .filter((m) => m.status === "available")
+                  .map((m) => ({ value: `legacy:${m.id}`, label: `${m.name} v${m.version}` }));
+                return (
+                  <Form.Item label="MCP" name="dependency_id" rules={[{ required: true }]}>
+                    <Select options={mcpOptions} placeholder="選擇" showSearch optionFilterProp="label" />
+                  </Form.Item>
+                );
+              }
+
+              const legacyOptions = (skillsQuery.data ?? [])
+                .filter((s) => s.status === "available")
+                .map((s) => ({ value: `legacy:${s.id}`, label: `${s.name} v${s.version}` }));
+              const registryOptions = (skillhubRegistryQuery.data?.items ?? []).map((i) => ({
                 value: `registry:${i.id}`,
                 label: `${i.name}${i.version ? ` v${i.version}` : ""}`,
               }));
               const groupedOptions = [
-                { label: type === "skill" ? "Skills（已上傳）" : "MCP（已上傳）", options: legacyOptions },
-                {
-                  label: type === "skill" ? "SkillHub Registry（已同步）" : "MCP Registry（已同步）",
-                  options: registryOptions,
-                },
+                { label: "Skills（已上傳）", options: legacyOptions },
+                { label: "SkillHub Registry（已同步）", options: registryOptions },
               ];
               return (
-                <Form.Item label={type === "skill" ? "Skill" : "MCP"} name="dependency_id" rules={[{ required: true }]}>
+                <Form.Item label="Skill" name="dependency_id" rules={[{ required: true }]}>
                   <Select options={groupedOptions} placeholder="選擇" showSearch optionFilterProp="label" />
                 </Form.Item>
               );

@@ -4,8 +4,6 @@ import AppLayout from "./components/AppLayout";
 import AdminAgents from "./pages/AdminAgents";
 import AdminAgentSummary from "./pages/AdminAgentSummary";
 import AdminAgentTemplates from "./pages/AdminAgentTemplates";
-import AdminMcpRegistry from "./pages/AdminMcpRegistry";
-import AdminModelRegistry from "./pages/AdminModelRegistry";
 import AdminReviewSummary from "./pages/AdminReviewSummary";
 import AdminSkillHubRegistry from "./pages/AdminSkillHubRegistry";
 import AdminStats from "./pages/AdminStats";
@@ -15,6 +13,8 @@ import AgentDetail from "./pages/AgentDetail";
 import Browse from "./pages/Browse";
 import Login from "./pages/Login";
 import MyAgents from "./pages/MyAgents";
+import RegistryMcps from "./pages/RegistryMcps";
+import RegistryModels from "./pages/RegistryModels";
 import ReviewDetail from "./pages/ReviewDetail";
 import ReviewQueue from "./pages/ReviewQueue";
 import Reviews from "./pages/Reviews";
@@ -51,6 +51,8 @@ export default function App() {
           }
         />
         <Route path="/skills" element={<Skills />} />
+        <Route path="/registry/mcps" element={<RegistryMcps />} />
+        <Route path="/registry/models" element={<RegistryModels />} />
         <Route
           path="/admin/users"
           element={
@@ -88,22 +90,6 @@ export default function App() {
           element={
             <ProtectedRoute requireAdmin>
               <AdminAgentTemplates />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/mcp-registry"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminMcpRegistry />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/model-registry"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminModelRegistry />
             </ProtectedRoute>
           }
         />

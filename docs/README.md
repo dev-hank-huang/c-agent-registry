@@ -6,6 +6,7 @@
 - [architecture.md](architecture.md) — 技術選型、目錄結構、資料模型與原始 ERD 的差異
 - [roles-and-permissions.md](roles-and-permissions.md) — 系統角色 vs per-agent 角色、權限矩陣
 - [agent-lifecycle.md](agent-lifecycle.md) — Agent/Version 狀態機、送審與審核者指定、打包流程
+- [registry-sync.md](registry-sync.md) — Skill/MCP/Model registry 的可用狀態欄位與同步機制設計
 - [sso.md](sso.md) — SSO（OIDC）登入設計
 - [frontend-plan.md](frontend-plan.md) — 前端技術選型、路由/畫面對應、認證流程、RWD 設計、已知限制
 - [history/](history/) — 每次重要 commit 的修改摘要與決策脈絡

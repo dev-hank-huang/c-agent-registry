@@ -1,8 +1,13 @@
 import { apiClient } from "./client";
-import type { Mcp, Skill } from "./types";
+import type { Mcp, Skill, SyncResult } from "./types";
 
 export async function listSkills(): Promise<Skill[]> {
   const { data } = await apiClient.get<Skill[]>("/skills");
+  return data;
+}
+
+export async function syncSkills(): Promise<SyncResult<Skill>> {
+  const { data } = await apiClient.post<SyncResult<Skill>>("/skills/sync");
   return data;
 }
 
@@ -45,5 +50,10 @@ export interface CreateMcpInput {
 
 export async function createMcp(input: CreateMcpInput): Promise<Mcp> {
   const { data } = await apiClient.post<Mcp>("/mcps", { tags: [], ...input });
+  return data;
+}
+
+export async function syncMcps(): Promise<SyncResult<Mcp>> {
+  const { data } = await apiClient.post<SyncResult<Mcp>>("/mcps/sync");
   return data;
 }

@@ -54,11 +54,18 @@ class DependencySource(str, enum.Enum):
     """Which table/store `AgentDependency.dependency_id` resolves against.
 
     legacy = the first-party skills/mcps tables (Skills & MCP's upload flow).
-    registry = an item mirrored into the Registry pages (MCP Registry / SkillHub
-    Registry) via external sync. Both are valid at once during the migration this
-    repo is mid-way through — legacy stays until the real sync integration is
-    connected and registries are populated (see app/crud/registry.py).
+    registry = an item mirrored into the SkillHub Registry page via external sync
+    (see app/crud/registry.py). Skill-only — MCP dependencies resolve against the
+    mcps table directly (see AvailabilityStatus below), there's no separate "MCP
+    registry" mirror; Agent Templates and Model aren't dependency types at all.
     """
 
     legacy = "legacy"
     registry = "registry"
+
+
+class AvailabilityStatus(str, enum.Enum):
+    """Registry item availability, refreshed by the per-category sync endpoints."""
+
+    available = "available"
+    unavailable = "unavailable"

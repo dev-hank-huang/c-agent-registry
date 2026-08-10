@@ -3,10 +3,11 @@ import pytest
 from app.models.enums import UserRole
 from tests.conftest import auth_headers, login, make_user
 
-# Route paths mirror the reference repo's Registry group exactly (see
-# app/schemas/registry.py's PLACEHOLDER note) — Agent Templates, MCP Registry,
-# Model Registry, SkillHub Registry all share the same shape and gating.
-SOURCES = ["agent-templates", "mcp-registry", "model-registry", "skillhub-registry"]
+# Agent Templates and SkillHub Registry share the same placeholder shape and
+# gating (see app/schemas/registry.py's PLACEHOLDER note). MCP and Model used to be
+# here too but now have their own real availability-sync implementation instead —
+# see test_registry_sync.py.
+SOURCES = ["agent-templates", "skillhub-registry"]
 
 
 @pytest.mark.parametrize("source", SOURCES)

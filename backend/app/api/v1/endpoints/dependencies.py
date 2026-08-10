@@ -22,14 +22,13 @@ from app.schemas.agent_dependency import AgentDependencyCreate, AgentDependencyR
 
 router = APIRouter(tags=["dependencies"])
 
-# Which Registry source (see app/crud/registry.py) backs each dependency `type` when
-# source=registry — MCP Registry mirrors `mcp` dependencies, SkillHub Registry mirrors
-# `skill` dependencies. Model Registry and Agent Templates aren't dependency types
-# here; the former has no consumption point in this app yet, the latter scaffolds a
-# new version rather than being attached to one.
+# Which Registry source (see app/crud/registry.py) backs a dependency `type` when
+# source=registry. Skill-only now — SkillHub Registry mirrors `skill` dependencies;
+# `mcp` has no registry source anymore (it resolves against the real, availability-
+# synced mcps table directly, same as source=legacy — see app/api/v1/endpoints/
+# mcps.py). Model and Agent Templates aren't dependency types at all here.
 _REGISTRY_SOURCE_BY_TYPE = {
     DependencyType.skill: "skillhub-registry",
-    DependencyType.mcp: "mcp-registry",
 }
 
 
@@ -73,7 +72,12 @@ async def add_dependency(
             else:
                 exists = await mcp_crud.get_by_id(db, legacy_id)
     else:
-        registry_source = _REGISTRY_SOURCE_BY_TYPE[payload.type]
+        registry_source = _REGISTRY_SOURCE_BY_TYPE.get(payload.type)
+        if registry_source is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"{payload.type.value} has no registry source — use source=legacy",
+            )
         exists = registry_crud.get_item(registry_source, payload.dependency_id)
     if exists is None:
         raise HTTPException(

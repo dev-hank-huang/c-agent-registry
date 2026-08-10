@@ -13,10 +13,13 @@ export type VersionStatus =
 export type ReviewResult = "pending" | "approved" | "rejected";
 export type DependencyType = "skill" | "mcp";
 // legacy = the first-party skills/mcps tables (Skills & MCP's upload flow).
-// registry = an item mirrored via the Registry pages' external sync — see
-// UI_AUDIT.md's registry-migration note. Both are valid at once during the
-// migration; "legacy" stays until the registries are actually populated.
+// registry = an item mirrored via the SkillHub Registry page's external sync — see
+// UI_AUDIT.md's registry-migration note. Skill-only; MCP dependencies resolve
+// against the mcps table directly (see AvailabilityStatus below) — no separate
+// "MCP registry" mirror.
 export type DependencySource = "legacy" | "registry";
+
+export type AvailabilityStatus = "available" | "unavailable";
 
 export interface User {
   id: string;
@@ -159,7 +162,10 @@ export interface AgentSummary {
   byVisibility: { visibility: AgentVisibility; count: number }[];
 }
 
-export type RegistrySource = "agent-templates" | "mcp-registry" | "model-registry" | "skillhub-registry";
+// mcp/model used to be placeholder sources here too — they're real now (their own
+// availability-sync implementation on the mcps/ai_models tables), not part of this
+// mirrored-external-registry contract.
+export type RegistrySource = "agent-templates" | "skillhub-registry";
 
 export interface RegistryItem {
   id: string;
@@ -248,6 +254,8 @@ export interface Skill {
   created_by: string;
   bucket_path: string;
   mcp_dependency: string[];
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -261,6 +269,31 @@ export interface Mcp {
   tags: string[];
   created_by: string;
   host: string;
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SyncResult<T> {
+  synced_at: string;
+  total: number;
+  available: number;
+  unavailable: number;
+  items: T[];
+}
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  model_id: string;
+  description: string | null;
+  category: string | null;
+  tags: string[];
+  created_by: string;
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
