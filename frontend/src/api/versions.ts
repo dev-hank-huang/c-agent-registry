@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { AgentDependency, AgentVersion, DependencyType } from "./types";
+import type { AgentDependency, AgentVersion, DependencySource, DependencyType } from "./types";
 
 export async function listVersions(agentSlug: string): Promise<AgentVersion[]> {
   const { data } = await apiClient.get<AgentVersion[]>(`/agents/${agentSlug}/versions`);
@@ -73,10 +73,11 @@ export async function addDependency(
   versionSlug: string,
   dependencyId: string,
   type: DependencyType,
+  source: DependencySource = "legacy",
 ): Promise<AgentDependency> {
   const { data } = await apiClient.post<AgentDependency>(
     `/versions/${versionSlug}/dependencies`,
-    { dependency_id: dependencyId, type },
+    { dependency_id: dependencyId, type, source },
   );
   return data;
 }

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_dependency import AgentDependency
-from app.models.enums import DependencyType
+from app.models.enums import DependencySource, DependencyType
 
 
 async def list_by_version(db: AsyncSession, agent_slug: str) -> list[AgentDependency]:
@@ -19,9 +19,16 @@ async def get_by_id(db: AsyncSession, dependency_row_id: uuid.UUID) -> AgentDepe
 
 
 async def create_dependency(
-    db: AsyncSession, *, agent_slug: str, dependency_id: uuid.UUID, type: DependencyType
+    db: AsyncSession,
+    *,
+    agent_slug: str,
+    dependency_id: str,
+    type: DependencyType,
+    source: DependencySource = DependencySource.legacy,
 ) -> AgentDependency:
-    dependency = AgentDependency(agent_slug=agent_slug, dependency_id=dependency_id, type=type)
+    dependency = AgentDependency(
+        agent_slug=agent_slug, dependency_id=dependency_id, type=type, source=source
+    )
     db.add(dependency)
     await db.commit()
     await db.refresh(dependency)

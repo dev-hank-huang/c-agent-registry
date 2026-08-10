@@ -12,6 +12,11 @@ export type VersionStatus =
   | "archived";
 export type ReviewResult = "pending" | "approved" | "rejected";
 export type DependencyType = "skill" | "mcp";
+// legacy = the first-party skills/mcps tables (Skills & MCP's upload flow).
+// registry = an item mirrored via the Registry pages' external sync — see
+// UI_AUDIT.md's registry-migration note. Both are valid at once during the
+// migration; "legacy" stays until the registries are actually populated.
+export type DependencySource = "legacy" | "registry";
 
 export interface User {
   id: string;
@@ -265,5 +270,6 @@ export interface AgentDependency {
   agent_slug: string;
   dependency_id: string;
   type: DependencyType;
+  source: DependencySource;
   created_at: string;
 }

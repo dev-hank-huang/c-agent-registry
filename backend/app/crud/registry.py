@@ -41,6 +41,10 @@ def get_overview(source: str) -> RegistryOverview:
     )
 
 
+def get_item(source: str, item_id: str):
+    return next((item for item in _state[source]["items"] if item.id == item_id), None)
+
+
 def trigger_resync(source: str) -> RegistryStatus:
     # Stub: "succeeds" immediately and just stamps the current time — a real
     # implementation would actually call out to the source, update

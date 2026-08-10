@@ -13,13 +13,24 @@ from app.core.agent_access import (
 from app.core.deps import get_current_user
 from app.crud import agent_dependency as dependency_crud
 from app.crud import mcp as mcp_crud
+from app.crud import registry as registry_crud
 from app.crud import skill as skill_crud
 from app.db.base import get_db
-from app.models.enums import DependencyType
+from app.models.enums import DependencySource, DependencyType
 from app.models.user import User
 from app.schemas.agent_dependency import AgentDependencyCreate, AgentDependencyRead
 
 router = APIRouter(tags=["dependencies"])
+
+# Which Registry source (see app/crud/registry.py) backs each dependency `type` when
+# source=registry — MCP Registry mirrors `mcp` dependencies, SkillHub Registry mirrors
+# `skill` dependencies. Model Registry and Agent Templates aren't dependency types
+# here; the former has no consumption point in this app yet, the latter scaffolds a
+# new version rather than being attached to one.
+_REGISTRY_SOURCE_BY_TYPE = {
+    DependencyType.skill: "skillhub-registry",
+    DependencyType.mcp: "mcp-registry",
+}
 
 
 @router.get("/versions/{version_slug}/dependencies", response_model=list[AgentDependencyRead])
@@ -51,14 +62,23 @@ async def add_dependency(
     await ensure_can_manage(db, agent, current_user)
     ensure_version_editable(agent_version)
 
-    if payload.type == DependencyType.skill:
-        exists = await skill_crud.get_by_id(db, payload.dependency_id)
+    if payload.source == DependencySource.legacy:
+        try:
+            legacy_id = uuid.UUID(payload.dependency_id)
+        except ValueError:
+            exists = None
+        else:
+            if payload.type == DependencyType.skill:
+                exists = await skill_crud.get_by_id(db, legacy_id)
+            else:
+                exists = await mcp_crud.get_by_id(db, legacy_id)
     else:
-        exists = await mcp_crud.get_by_id(db, payload.dependency_id)
+        registry_source = _REGISTRY_SOURCE_BY_TYPE[payload.type]
+        exists = registry_crud.get_item(registry_source, payload.dependency_id)
     if exists is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{payload.type.value} {payload.dependency_id} not found",
+            detail=f"{payload.source.value} {payload.type.value} {payload.dependency_id} not found",
         )
 
     dependency = await dependency_crud.create_dependency(
@@ -66,6 +86,7 @@ async def add_dependency(
         agent_slug=agent_version.slug,
         dependency_id=payload.dependency_id,
         type=payload.type,
+        source=payload.source,
     )
     return AgentDependencyRead.model_validate(dependency)
 

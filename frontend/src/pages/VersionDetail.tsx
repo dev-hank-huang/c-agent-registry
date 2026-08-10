@@ -21,8 +21,9 @@ import {
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { listSkills, listMcps } from "../api/skills";
+import { getRegistryOverview } from "../api/registry";
 import { listReviewerCandidates, listVersionReviews } from "../api/reviews";
-import type { DependencyType } from "../api/types";
+import type { DependencySource, DependencyType } from "../api/types";
 import {
   activateVersion,
   addDependency,
@@ -63,6 +64,17 @@ export default function VersionDetail() {
   });
   const skillsQuery = useQuery({ queryKey: ["skills"], queryFn: listSkills });
   const mcpsQuery = useQuery({ queryKey: ["mcps"], queryFn: listMcps });
+  // Registry-sourced options — see UI_AUDIT.md's registry-migration note. Currently
+  // always empty until the real sync integration lands (app/crud/registry.py), so
+  // these queries just contribute nothing to the picker below yet, not an error.
+  const mcpRegistryQuery = useQuery({
+    queryKey: ["admin-registry", "mcp-registry"],
+    queryFn: () => getRegistryOverview("mcp-registry"),
+  });
+  const skillhubRegistryQuery = useQuery({
+    queryKey: ["admin-registry", "skillhub-registry"],
+    queryFn: () => getRegistryOverview("skillhub-registry"),
+  });
   const reviewerCandidatesQuery = useQuery({
     queryKey: ["reviewer-candidates"],
     queryFn: listReviewerCandidates,
@@ -75,6 +87,14 @@ export default function VersionDetail() {
   const mcpNameById = useMemo(
     () => new Map((mcpsQuery.data ?? []).map((m) => [m.id, `${m.name} v${m.version}`])),
     [mcpsQuery.data],
+  );
+  const skillhubItemNameById = useMemo(
+    () => new Map((skillhubRegistryQuery.data?.items ?? []).map((i) => [i.id, i.name])),
+    [skillhubRegistryQuery.data],
+  );
+  const mcpRegistryItemNameById = useMemo(
+    () => new Map((mcpRegistryQuery.data?.items ?? []).map((i) => [i.id, i.name])),
+    [mcpRegistryQuery.data],
   );
 
   const invalidateVersion = () => {
@@ -122,8 +142,8 @@ export default function VersionDetail() {
   });
 
   const addDepMutation = useMutation({
-    mutationFn: (values: { type: DependencyType; dependency_id: string }) =>
-      addDependency(versionSlug!, values.dependency_id, values.type),
+    mutationFn: (values: { type: DependencyType; dependency_id: string; source: DependencySource }) =>
+      addDependency(versionSlug!, values.dependency_id, values.type, values.source),
     onSuccess: () => {
       message.success("已加入依賴");
       queryClient.invalidateQueries({ queryKey: ["version-deps", versionSlug] });
@@ -305,10 +325,10 @@ export default function VersionDetail() {
             {depsQuery.data && depsQuery.data.length > 0 ? (
               <Space wrap>
                 {depsQuery.data.map((d) => {
-                  const label =
-                    d.type === "skill"
-                      ? skillNameById.get(d.dependency_id) ?? d.dependency_id
-                      : mcpNameById.get(d.dependency_id) ?? d.dependency_id;
+                  const legacyName = d.type === "skill" ? skillNameById.get(d.dependency_id) : mcpNameById.get(d.dependency_id);
+                  const registryName =
+                    d.type === "skill" ? skillhubItemNameById.get(d.dependency_id) : mcpRegistryItemNameById.get(d.dependency_id);
+                  const label = (d.source === "registry" ? registryName : legacyName) ?? d.dependency_id;
                   return (
                     <Tag
                       key={d.id}
@@ -319,7 +339,7 @@ export default function VersionDetail() {
                         removeDepMutation.mutate(d.id);
                       }}
                     >
-                      {label} <span style={{ opacity: 0.6 }}>{d.type}</span>
+                      {label} <span style={{ opacity: 0.6 }}>{d.type}{d.source === "registry" ? " · synced" : ""}</span>
                     </Tag>
                   );
                 })}
@@ -406,7 +426,16 @@ export default function VersionDetail() {
           form={depForm}
           layout="vertical"
           initialValues={{ type: "skill" }}
-          onFinish={(v) => addDepMutation.mutate(v)}
+          onFinish={(v: { type: DependencyType; dependency_id: string }) => {
+            // Encoded as "<source>:<id>" by the option values below — decode before
+            // sending, the API wants source and dependency_id as separate fields.
+            const [source, ...rest] = v.dependency_id.split(":");
+            addDepMutation.mutate({
+              type: v.type,
+              source: source as DependencySource,
+              dependency_id: rest.join(":"),
+            });
+          }}
         >
           <Form.Item label="類型" name="type" rules={[{ required: true }]}>
             <Select
@@ -419,13 +448,25 @@ export default function VersionDetail() {
           <Form.Item noStyle shouldUpdate={(prev, cur) => prev.type !== cur.type}>
             {({ getFieldValue }) => {
               const type: DependencyType = getFieldValue("type");
-              const options =
+              const legacyOptions =
                 type === "skill"
-                  ? (skillsQuery.data ?? []).map((s) => ({ value: s.id, label: `${s.name} v${s.version}` }))
-                  : (mcpsQuery.data ?? []).map((m) => ({ value: m.id, label: `${m.name} v${m.version}` }));
+                  ? (skillsQuery.data ?? []).map((s) => ({ value: `legacy:${s.id}`, label: `${s.name} v${s.version}` }))
+                  : (mcpsQuery.data ?? []).map((m) => ({ value: `legacy:${m.id}`, label: `${m.name} v${m.version}` }));
+              const registryItems = type === "skill" ? skillhubRegistryQuery.data?.items : mcpRegistryQuery.data?.items;
+              const registryOptions = (registryItems ?? []).map((i) => ({
+                value: `registry:${i.id}`,
+                label: `${i.name}${i.version ? ` v${i.version}` : ""}`,
+              }));
+              const groupedOptions = [
+                { label: type === "skill" ? "Skills（已上傳）" : "MCP（已上傳）", options: legacyOptions },
+                {
+                  label: type === "skill" ? "SkillHub Registry（已同步）" : "MCP Registry（已同步）",
+                  options: registryOptions,
+                },
+              ];
               return (
                 <Form.Item label={type === "skill" ? "Skill" : "MCP"} name="dependency_id" rules={[{ required: true }]}>
-                  <Select options={options} placeholder="選擇" showSearch optionFilterProp="label" />
+                  <Select options={groupedOptions} placeholder="選擇" showSearch optionFilterProp="label" />
                 </Form.Item>
               );
             }}

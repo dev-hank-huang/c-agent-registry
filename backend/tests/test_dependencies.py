@@ -1,6 +1,8 @@
 import uuid
 
+from app.crud import registry as registry_crud
 from app.models.enums import UserRole
+from app.schemas.registry import RegistryItem
 from tests.conftest import auth_headers, login, make_user
 
 
@@ -113,3 +115,54 @@ async def test_dependencies_locked_after_submit(client, db_session):
         json={"dependency_id": skill["id"], "type": "skill"},
     )
     assert resp.status_code == 409
+
+
+async def test_dependency_omitted_source_defaults_to_legacy(client, db_session):
+    # Backward compatibility: existing clients that never send `source` (like the
+    # requests above) keep working against the first-party skills/mcps tables.
+    await make_user(db_session, email="dm4@example.com", role=UserRole.member)
+    token = await login(client, "dm4@example.com")
+    version_slug = await _create_agent_and_draft_version(client, token, "agent-d4")
+    skill = await _upload_skill(client, token, "skill-legacy")
+
+    resp = await client.post(
+        f"/api/v1/versions/{version_slug}/dependencies",
+        headers=auth_headers(token),
+        json={"dependency_id": skill["id"], "type": "skill"},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["source"] == "legacy"
+
+
+async def test_dependency_registry_source_rejects_when_not_synced(client, db_session):
+    await make_user(db_session, email="dm5@example.com", role=UserRole.member)
+    token = await login(client, "dm5@example.com")
+    version_slug = await _create_agent_and_draft_version(client, token, "agent-d5")
+
+    resp = await client.post(
+        f"/api/v1/versions/{version_slug}/dependencies",
+        headers=auth_headers(token),
+        json={"dependency_id": "not-mirrored-yet", "type": "mcp", "source": "registry"},
+    )
+    assert resp.status_code == 404
+
+
+async def test_dependency_registry_source_accepts_mirrored_item(client, db_session, monkeypatch):
+    # Simulates a real sync having populated the mcp-registry stub with one tool —
+    # the actual population logic is what the user's real sync integration replaces
+    # (see app/crud/registry.py's PLACEHOLDER note); this proves the dependency
+    # endpoint correctly recognizes whatever ends up in that store.
+    item = RegistryItem(id="web-search-tool", name="Web Search", version="2.1.0", category=None, deprecated=False, last_seen_at=None)
+    monkeypatch.setitem(registry_crud._state["mcp-registry"], "items", [item])
+
+    await make_user(db_session, email="dm6@example.com", role=UserRole.member)
+    token = await login(client, "dm6@example.com")
+    version_slug = await _create_agent_and_draft_version(client, token, "agent-d6")
+
+    resp = await client.post(
+        f"/api/v1/versions/{version_slug}/dependencies",
+        headers=auth_headers(token),
+        json={"dependency_id": "web-search-tool", "type": "mcp", "source": "registry"},
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["source"] == "registry"
