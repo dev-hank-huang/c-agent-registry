@@ -1,10 +1,10 @@
 import {
   AppstoreOutlined,
   CompassOutlined,
+  DatabaseOutlined,
   DownOutlined,
   LogoutOutlined,
   MenuOutlined,
-  ToolOutlined,
   UserOutlined,
   UsergroupAddOutlined,
 } from "@ant-design/icons";
@@ -52,7 +52,9 @@ export default function AppLayout() {
     const path = location.pathname;
     if (path.startsWith("/my-agents") || path.startsWith("/agents/")) return "my-agents";
     if (path.startsWith("/reviews")) return "reviews";
-    if (path.startsWith("/skills")) return "skills";
+    if (path.startsWith("/registry/skills")) return "registry-skills";
+    if (path.startsWith("/registry/mcps")) return "registry-mcps";
+    if (path.startsWith("/registry/models")) return "registry-models";
     if (path.startsWith("/admin/users")) return "admin-users";
     return "browse";
   }, [location.pathname]);
@@ -80,10 +82,14 @@ export default function AppLayout() {
       onClick: () => go("/reviews"),
     },
     {
-      key: "skills",
-      icon: <ToolOutlined />,
-      label: "Skills & MCP",
-      onClick: () => go("/skills"),
+      key: "registry",
+      icon: <DatabaseOutlined />,
+      label: "Registry",
+      children: [
+        { key: "registry-skills", label: "Skill", onClick: () => go("/registry/skills") },
+        { key: "registry-mcps", label: "MCP", onClick: () => go("/registry/mcps") },
+        { key: "registry-models", label: "Model", onClick: () => go("/registry/models") },
+      ],
     },
     ...(user.role === "admin"
       ? [
@@ -103,7 +109,7 @@ export default function AppLayout() {
     <Menu
       mode="inline"
       selectedKeys={[selectedKey]}
-      defaultOpenKeys={["agent-mgmt", "admin"]}
+      defaultOpenKeys={["agent-mgmt", "registry", "admin"]}
       items={menuItems}
       style={{ border: "none" }}
     />

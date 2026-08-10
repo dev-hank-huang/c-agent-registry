@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.models.enums import AvailabilityStatus
+
 
 class SkillRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -16,5 +18,15 @@ class SkillRead(BaseModel):
     created_by: uuid.UUID
     bucket_path: str
     mcp_dependency: list[uuid.UUID]
+    status: AvailabilityStatus
+    last_synced_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class SkillSyncResult(BaseModel):
+    synced_at: datetime
+    total: int
+    available: int
+    unavailable: int
+    items: list[SkillRead]

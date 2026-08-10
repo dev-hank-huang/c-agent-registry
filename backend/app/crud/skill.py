@@ -1,8 +1,10 @@
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.enums import AvailabilityStatus
 from app.models.skill import Skill
 
 
@@ -43,3 +45,9 @@ async def create_skill(
     await db.commit()
     await db.refresh(skill)
     return skill
+
+
+def mark_synced(skill: Skill, status: AvailabilityStatus) -> None:
+    """Set status + last_synced_at on the in-session object. Caller commits once for the batch."""
+    skill.status = status
+    skill.last_synced_at = datetime.now(timezone.utc)

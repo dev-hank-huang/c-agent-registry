@@ -1,6 +1,7 @@
 from app.models.agent import Agent
 from app.models.agent_dependency import AgentDependency
 from app.models.agent_version import AgentVersion
+from app.models.ai_model import AIModel
 from app.models.mcp import MCP
 from app.models.review import Review
 from app.models.skill import Skill
@@ -11,6 +12,7 @@ __all__ = [
     "Agent",
     "AgentDependency",
     "AgentVersion",
+    "AIModel",
     "MCP",
     "Review",
     "Skill",

@@ -48,3 +48,10 @@ class ReviewResult(str, enum.Enum):
 class DependencyType(str, enum.Enum):
     skill = "skill"
     mcp = "mcp"
+
+
+class AvailabilityStatus(str, enum.Enum):
+    """Registry item availability, refreshed by the per-category sync endpoints."""
+
+    available = "available"
+    unavailable = "unavailable"

@@ -421,8 +421,12 @@ export default function VersionDetail() {
               const type: DependencyType = getFieldValue("type");
               const options =
                 type === "skill"
-                  ? (skillsQuery.data ?? []).map((s) => ({ value: s.id, label: `${s.name} v${s.version}` }))
-                  : (mcpsQuery.data ?? []).map((m) => ({ value: m.id, label: `${m.name} v${m.version}` }));
+                  ? (skillsQuery.data ?? [])
+                      .filter((s) => s.status === "available")
+                      .map((s) => ({ value: s.id, label: `${s.name} v${s.version}` }))
+                  : (mcpsQuery.data ?? [])
+                      .filter((m) => m.status === "available")
+                      .map((m) => ({ value: m.id, label: `${m.name} v${m.version}` }));
               return (
                 <Form.Item label={type === "skill" ? "Skill" : "MCP"} name="dependency_id" rules={[{ required: true }]}>
                   <Select options={options} placeholder="選擇" showSearch optionFilterProp="label" />

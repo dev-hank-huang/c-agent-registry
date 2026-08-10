@@ -52,6 +52,17 @@ def get_bytes(bucket: str, object_name: str) -> bytes:
         response.release_conn()
 
 
+def object_exists(bucket: str, object_name: str) -> bool:
+    client = get_minio_client()
+    try:
+        client.stat_object(bucket, object_name)
+        return True
+    except S3Error as e:
+        if e.code == "NoSuchKey":
+            return False
+        raise
+
+
 def presigned_download_url(bucket: str, object_name: str, expires_minutes: int = 60) -> str:
     client = get_minio_client()
     return client.presigned_get_object(

@@ -12,6 +12,7 @@ export type VersionStatus =
   | "archived";
 export type ReviewResult = "pending" | "approved" | "rejected";
 export type DependencyType = "skill" | "mcp";
+export type AvailabilityStatus = "available" | "unavailable";
 
 export interface User {
   id: string;
@@ -88,6 +89,8 @@ export interface Skill {
   created_by: string;
   bucket_path: string;
   mcp_dependency: string[];
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -101,6 +104,31 @@ export interface Mcp {
   tags: string[];
   created_by: string;
   host: string;
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SyncResult<T> {
+  synced_at: string;
+  total: number;
+  available: number;
+  unavailable: number;
+  items: T[];
+}
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  model_id: string;
+  description: string | null;
+  category: string | null;
+  tags: string[];
+  created_by: string;
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }

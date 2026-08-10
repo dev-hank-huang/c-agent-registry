@@ -14,3 +14,5 @@
 | 0006 | [`5661116`](0006-agent-card-erd-sync.md) | 2026-08-05 | ERD 圖同步角色改版後的欄位命名 |
 | 0007 | [`4df2258`](0007-add-frontend.md) | 2026-08-05 | 前端從零建置（React + Vite + Ant Design） |
 | 0008 | [`f3a1179`](0008-close-permission-gaps.md) | 2026-08-06 | 補齊使用者/agent 權限落差：軟刪除、agent 編輯、送審 fallback、打包路徑、角色調整 UI |
+| 0009 | [`0f71324`](0009-erd-sync-with-live-schema.md) | 2026-08-10 | idea.drawio 的 ERD 同步成目前 PostgreSQL 的實際 schema |
+| 0010 | [`(待回填)`](0010-registry-sync.md) | 2026-08-10 | 新增 Registry 分類（Skill/MCP/Model）+ 同步機制，agent version 依賴選單改為只列可用項目 |

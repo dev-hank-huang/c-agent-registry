@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     agent_versions,
     agents,
+    ai_models,
     auth,
     dependencies,
     mcps,
@@ -20,3 +21,4 @@ api_router.include_router(dependencies.router)
 api_router.include_router(reviews.router)
 api_router.include_router(skills.router)
 api_router.include_router(mcps.router)
+api_router.include_router(ai_models.router)

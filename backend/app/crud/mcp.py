@@ -1,8 +1,10 @@
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.enums import AvailabilityStatus
 from app.models.mcp import MCP
 
 
@@ -39,3 +41,9 @@ async def create_mcp(
     await db.commit()
     await db.refresh(mcp)
     return mcp
+
+
+def mark_synced(mcp: MCP, status: AvailabilityStatus) -> None:
+    """Set status + last_synced_at on the in-session object. Caller commits once for the batch."""
+    mcp.status = status
+    mcp.last_synced_at = datetime.now(timezone.utc)
