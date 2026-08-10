@@ -1,8 +1,24 @@
 import { apiClient } from "./client";
-import type { Review, ReviewerCandidate, ReviewResult } from "./types";
+import type { Review, ReviewerCandidate, ReviewQueueResponse, ReviewResult, ReviewSummary } from "./types";
 
 export async function listReviewerCandidates(): Promise<ReviewerCandidate[]> {
   const { data } = await apiClient.get<ReviewerCandidate[]>("/reviewers");
+  return data;
+}
+
+export interface ReviewQueueParams {
+  status?: ReviewResult;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listReviewQueue(params: ReviewQueueParams = {}): Promise<ReviewQueueResponse> {
+  const { data } = await apiClient.get<ReviewQueueResponse>("/reviews", { params });
+  return data;
+}
+
+export async function getReviewSummary(): Promise<ReviewSummary> {
+  const { data } = await apiClient.get<ReviewSummary>("/admin/review-summary");
   return data;
 }
 

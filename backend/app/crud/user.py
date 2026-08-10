@@ -2,12 +2,18 @@ import secrets
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
 from app.models.enums import UserRole, UserStatus
 from app.models.user import User
+
+_SORT_CLAUSES = {
+    "newest": User.created_at.desc(),
+    "oldest": User.created_at.asc(),
+    "name": User.name.asc(),
+}
 
 
 async def get_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
@@ -24,10 +30,28 @@ async def get_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalar_one_or_none()
 
 
-async def list_users(db: AsyncSession) -> list[User]:
-    result = await db.execute(
-        select(User).where(User.deleted_at.is_(None)).order_by(User.created_at)
-    )
+async def list_users(
+    db: AsyncSession,
+    *,
+    q: str | None = None,
+    role: UserRole | None = None,
+    status: UserStatus | None = None,
+    sort: str = "newest",
+) -> list[User]:
+    # Always excludes soft-deleted users, same as before this gained filters — a
+    # deleted user stays gone from every list, not just the default one. `status`
+    # filters the separate, reversible active/disabled toggle (see User.deleted_at's
+    # docstring for how the two differ).
+    stmt = select(User).where(User.deleted_at.is_(None))
+    if q:
+        pattern = f"%{q}%"
+        stmt = stmt.where(or_(User.name.ilike(pattern), User.email.ilike(pattern)))
+    if role is not None:
+        stmt = stmt.where(User.role == role)
+    if status is not None:
+        stmt = stmt.where(User.status == status)
+    stmt = stmt.order_by(_SORT_CLAUSES.get(sort, _SORT_CLAUSES["newest"]))
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 

@@ -7,6 +7,15 @@ from app.models.enums import AssetRole
 from app.models.user_agent_rel import UserAgentRel
 
 
+async def get_owner(db: AsyncSession, agent_id: uuid.UUID) -> UserAgentRel | None:
+    result = await db.execute(
+        select(UserAgentRel).where(
+            UserAgentRel.agent_id == agent_id, UserAgentRel.role == AssetRole.owner
+        )
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_membership(
     db: AsyncSession, user_id: uuid.UUID, agent_id: uuid.UUID
 ) -> UserAgentRel | None:

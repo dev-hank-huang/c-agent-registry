@@ -43,7 +43,7 @@ async def test_admin_can_create_and_list_users(client, db_session):
 
     resp = await client.get("/api/v1/users", headers=auth_headers(token))
     assert resp.status_code == 200
-    emails = {u["email"] for u in resp.json()}
+    emails = {u["email"] for u in resp.json()["items"]}
     assert {"admin@example.com", "new@example.com"} <= emails
 
 
@@ -65,7 +65,7 @@ async def test_admin_can_delete_user_and_deleted_user_cannot_login(client, db_se
 
     # deleted user disappears from the admin list
     resp = await client.get("/api/v1/users", headers=auth_headers(admin_token))
-    assert "doomed@example.com" not in {u["email"] for u in resp.json()}
+    assert "doomed@example.com" not in {u["email"] for u in resp.json()["items"]}
 
     # can't log in with password anymore
     resp = await client.post(

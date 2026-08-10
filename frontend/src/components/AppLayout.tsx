@@ -51,9 +51,14 @@ export default function AppLayout() {
   const selectedKey = useMemo(() => {
     const path = location.pathname;
     if (path.startsWith("/my-agents") || path.startsWith("/agents/")) return "my-agents";
-    if (path.startsWith("/reviews")) return "reviews";
+    if (path.startsWith("/review-queue")) return "review-queue";
+    if (path.startsWith("/admin/review-summary")) return "review-summary";
+    if (path.startsWith("/reviews")) return "my-reviews";
     if (path.startsWith("/skills")) return "skills";
     if (path.startsWith("/admin/users")) return "admin-users";
+    if (path.startsWith("/admin/agent-summary")) return "admin-agent-summary";
+    if (path.startsWith("/admin/agents")) return "admin-agents";
+    if (path.startsWith("/admin/user-summary")) return "admin-user-summary";
     return "browse";
   }, [location.pathname]);
 
@@ -77,7 +82,13 @@ export default function AppLayout() {
       key: "reviews",
       icon: <UsergroupAddOutlined />,
       label: "Reviews",
-      onClick: () => go("/reviews"),
+      children: [
+        { key: "review-queue", label: "Review Queue", onClick: () => go("/review-queue") },
+        ...(user.role === "admin"
+          ? [{ key: "review-summary", label: "Review Summary", onClick: () => go("/admin/review-summary") }]
+          : []),
+        { key: "my-reviews", label: "My Reviews", onClick: () => go("/reviews") },
+      ],
     },
     {
       key: "skills",
@@ -90,9 +101,12 @@ export default function AppLayout() {
           {
             key: "admin",
             icon: <UserOutlined />,
-            label: "Admin",
+            label: "Governance",
             children: [
-              { key: "admin-users", label: "使用者管理", onClick: () => go("/admin/users") },
+              { key: "admin-users", label: "Users", onClick: () => go("/admin/users") },
+              { key: "admin-user-summary", label: "User Summary", onClick: () => go("/admin/user-summary") },
+              { key: "admin-agents", label: "Agents", onClick: () => go("/admin/agents") },
+              { key: "admin-agent-summary", label: "Agent Summary", onClick: () => go("/admin/agent-summary") },
             ],
           },
         ]
@@ -103,7 +117,7 @@ export default function AppLayout() {
     <Menu
       mode="inline"
       selectedKeys={[selectedKey]}
-      defaultOpenKeys={["agent-mgmt", "admin"]}
+      defaultOpenKeys={["agent-mgmt", "reviews", "admin"]}
       items={menuItems}
       style={{ border: "none" }}
     />

@@ -33,6 +33,13 @@ class UserRead(BaseModel):
     updated_at: datetime
 
 
+class UserListResponse(BaseModel):
+    items: list[UserRead]
+    total: int
+    limit: int
+    offset: int
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"

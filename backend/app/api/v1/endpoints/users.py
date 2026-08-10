@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import require_role
 from app.crud import user as user_crud
 from app.db.base import get_db
-from app.models.enums import UserRole
+from app.models.enums import UserRole, UserStatus
 from app.models.user import User
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.user import UserCreate, UserListResponse, UserRead, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -35,13 +35,25 @@ async def create_user(
     return UserRead.model_validate(user)
 
 
-@router.get("", response_model=list[UserRead])
+@router.get("", response_model=UserListResponse)
 async def list_users(
+    q: str | None = None,
+    role: UserRole | None = None,
+    status: UserStatus | None = None,
+    sort: str = "newest",
+    limit: int = 20,
+    offset: int = 0,
     db: AsyncSession = Depends(get_db),
     _: object = Depends(admin_only),
-) -> list[UserRead]:
-    users = await user_crud.list_users(db)
-    return [UserRead.model_validate(u) for u in users]
+) -> UserListResponse:
+    users = await user_crud.list_users(db, q=q, role=role, status=status, sort=sort)
+    page = users[offset : offset + limit]
+    return UserListResponse(
+        items=[UserRead.model_validate(u) for u in page],
+        total=len(users),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.patch("/{user_id}", response_model=UserRead)

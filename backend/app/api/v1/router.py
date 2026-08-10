@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    admin,
     agent_versions,
     agents,
     auth,
@@ -20,3 +21,4 @@ api_router.include_router(dependencies.router)
 api_router.include_router(reviews.router)
 api_router.include_router(skills.router)
 api_router.include_router(mcps.router)
+api_router.include_router(admin.router)

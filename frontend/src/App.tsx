@@ -1,12 +1,17 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
+import AdminAgents from "./pages/AdminAgents";
+import AdminAgentSummary from "./pages/AdminAgentSummary";
+import AdminReviewSummary from "./pages/AdminReviewSummary";
 import AdminUsers from "./pages/AdminUsers";
+import AdminUserSummary from "./pages/AdminUserSummary";
 import AgentDetail from "./pages/AgentDetail";
 import Browse from "./pages/Browse";
 import Login from "./pages/Login";
 import MyAgents from "./pages/MyAgents";
 import ReviewDetail from "./pages/ReviewDetail";
+import ReviewQueue from "./pages/ReviewQueue";
 import Reviews from "./pages/Reviews";
 import Skills from "./pages/Skills";
 import SsoCallback from "./pages/SsoCallback";
@@ -31,12 +36,45 @@ export default function App() {
         <Route path="/agents/:agentSlug/versions/:versionSlug" element={<VersionDetail />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/reviews/:reviewId" element={<ReviewDetail />} />
+        <Route path="/review-queue" element={<ReviewQueue />} />
+        <Route
+          path="/admin/review-summary"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminReviewSummary />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/skills" element={<Skills />} />
         <Route
           path="/admin/users"
           element={
             <ProtectedRoute requireAdmin>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/agents"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminAgents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/user-summary"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminUserSummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/agent-summary"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminAgentSummary />
             </ProtectedRoute>
           }
         />

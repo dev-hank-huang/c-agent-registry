@@ -10,7 +10,7 @@ from app.core.agent_access import (
     get_agent_by_id_or_404,
     get_version_or_404,
 )
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
 from app.crud import agent_version as version_crud
 from app.crud import review as review_crud
 from app.crud import user as user_crud
@@ -18,7 +18,14 @@ from app.db.base import get_db
 from app.models.enums import ReviewResult, UserRole, UserStatus, VersionStatus
 from app.models.user import User
 from app.schemas.agent_version import AgentVersionRead
-from app.schemas.review import ReviewDecision, ReviewerCandidate, ReviewRead, SubmitForReview
+from app.schemas.review import (
+    ReviewDecision,
+    ReviewerCandidate,
+    ReviewQueueItem,
+    ReviewQueueResponse,
+    ReviewRead,
+    SubmitForReview,
+)
 from app.services.packaging import generate_package_for_version
 from app.services.reviewers import list_reviewer_candidates
 
@@ -102,6 +109,45 @@ async def list_version_reviews(
     await ensure_agent_visible(db, agent, current_user)
     reviews = await review_crud.list_by_version(db, agent_version.slug)
     return [ReviewRead.model_validate(r) for r in reviews]
+
+
+@router.get("/reviews", response_model=ReviewQueueResponse)
+async def review_queue(
+    status: ReviewResult = ReviewResult.pending,
+    limit: int = 20,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.reviewer, UserRole.admin)),
+) -> ReviewQueueResponse:
+    # Admin sees every reviewer's rows (a genuine oversight queue); a reviewer sees
+    # only their own assignments — matches the same scope `decide_review` already
+    # enforces for who's allowed to act on a row.
+    scope_reviewer_id = None if current_user.role == UserRole.admin else current_user.id
+    rows, total = await review_crud.list_queue(
+        db, reviewer_id=scope_reviewer_id, status=status, limit=limit, offset=offset
+    )
+    items = [
+        ReviewQueueItem(
+            id=review.id,
+            result=review.result,
+            priority=review.priority,
+            comment=review.comment,
+            created_at=review.created_at,
+            updated_at=review.updated_at,
+            agent_slug=agent.slug,
+            agent_name=agent.name,
+            version_slug=version.slug,
+            version_number=version.version,
+            reviewer_id=reviewer.id,
+            reviewer_name=reviewer.name,
+            submitted_by_id=submitter.id,
+            submitted_by_name=submitter.name,
+            signoff_by_id=signoff.id if signoff else None,
+            signoff_by_name=signoff.name if signoff else None,
+        )
+        for review, version, agent, reviewer, submitter, signoff in rows
+    ]
+    return ReviewQueueResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get("/reviews/mine", response_model=list[ReviewRead])

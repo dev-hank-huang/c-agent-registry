@@ -45,3 +45,36 @@ class ReviewerCandidate(BaseModel):
     id: uuid.UUID
     name: str
     email: str
+
+
+class ReviewQueueItem(BaseModel):
+    """One row in the Review Queue — a Review enriched with the agent/version/people
+    display info the reference repo's "review request" concept bundles in one object,
+    even though this repo models it as a flatter Review-per-assigned-reviewer row."""
+
+    id: uuid.UUID
+    result: ReviewResult
+    priority: int
+    comment: str | None
+    created_at: datetime
+    updated_at: datetime
+    agent_slug: str
+    agent_name: str
+    version_slug: str
+    version_number: int
+    reviewer_id: uuid.UUID
+    reviewer_name: str
+    # The version's author (AgentVersion.created_by) — the closest stable proxy this
+    # schema has for "submitted by"; AgentVersion.updated_by isn't safe to use for that
+    # since a decision overwrites it to the decider, not the original submitter.
+    submitted_by_id: uuid.UUID
+    submitted_by_name: str
+    signoff_by_id: uuid.UUID | None
+    signoff_by_name: str | None
+
+
+class ReviewQueueResponse(BaseModel):
+    items: list[ReviewQueueItem]
+    total: int
+    limit: int
+    offset: int

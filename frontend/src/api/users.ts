@@ -1,8 +1,17 @@
 import { apiClient } from "./client";
-import type { User, UserRole, UserStatus } from "./types";
+import type { User, UserListResponse, UserRole, UserSort, UserStatus } from "./types";
 
-export async function listUsers(): Promise<User[]> {
-  const { data } = await apiClient.get<User[]>("/users");
+export interface ListUsersParams {
+  q?: string;
+  role?: UserRole;
+  status?: UserStatus;
+  sort?: UserSort;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listUsers(params: ListUsersParams = {}): Promise<UserListResponse> {
+  const { data } = await apiClient.get<UserListResponse>("/users", { params });
   return data;
 }
 

@@ -283,3 +283,103 @@ async def test_rejected_version_can_be_edited_and_resubmitted_in_place(client, d
     )
     results = sorted(r["result"] for r in resp.json())
     assert results == ["pending", "rejected"]
+
+
+async def test_review_queue_admin_sees_every_reviewers_pending_rows(client, db_session):
+    await make_user(db_session, email="member6@example.com", role=UserRole.member)
+    rev_a = await make_user(db_session, email="reva6@example.com", role=UserRole.reviewer)
+    rev_b = await make_user(db_session, email="revb6@example.com", role=UserRole.reviewer)
+    admin = await make_user(db_session, email="admin6@example.com", role=UserRole.admin)
+    member_token = await login(client, "member6@example.com")
+    admin_token = await login(client, "admin6@example.com")
+
+    v1 = await _create_agent_and_draft_version(client, member_token, "agent-q1")
+    await client.post(
+        f"/api/v1/versions/{v1}/submit",
+        headers=auth_headers(member_token),
+        json={"reviewer_ids": [str(rev_a.id)]},
+    )
+    v2 = await _create_agent_and_draft_version(client, member_token, "agent-q2")
+    await client.post(
+        f"/api/v1/versions/{v2}/submit",
+        headers=auth_headers(member_token),
+        json={"reviewer_ids": [str(rev_b.id)]},
+    )
+
+    resp = await client.get("/api/v1/reviews?status=pending", headers=auth_headers(admin_token))
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 2
+    slugs = {item["agent_slug"] for item in body["items"]}
+    assert slugs == {"agent-q1", "agent-q2"}
+    # enriched with agent/version display info, not just the raw Review row
+    item = next(i for i in body["items"] if i["agent_slug"] == "agent-q1")
+    assert item["agent_name"] == "agent-q1"
+    assert item["version_number"] == 1
+    assert item["reviewer_name"] == "reva6"
+
+
+async def test_review_queue_reviewer_sees_only_their_own_assigned_rows(client, db_session):
+    await make_user(db_session, email="member7@example.com", role=UserRole.member)
+    rev_a = await make_user(db_session, email="reva7@example.com", role=UserRole.reviewer)
+    rev_b = await make_user(db_session, email="revb7@example.com", role=UserRole.reviewer)
+    member_token = await login(client, "member7@example.com")
+    rev_a_token = await login(client, "reva7@example.com")
+
+    v1 = await _create_agent_and_draft_version(client, member_token, "agent-q3")
+    await client.post(
+        f"/api/v1/versions/{v1}/submit",
+        headers=auth_headers(member_token),
+        json={"reviewer_ids": [str(rev_a.id)]},
+    )
+    v2 = await _create_agent_and_draft_version(client, member_token, "agent-q4")
+    await client.post(
+        f"/api/v1/versions/{v2}/submit",
+        headers=auth_headers(member_token),
+        json={"reviewer_ids": [str(rev_b.id)]},
+    )
+
+    resp = await client.get("/api/v1/reviews?status=pending", headers=auth_headers(rev_a_token))
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["agent_slug"] == "agent-q3"
+
+
+async def test_review_queue_forbidden_for_plain_member(client, db_session):
+    await make_user(db_session, email="member8@example.com", role=UserRole.member)
+    member_token = await login(client, "member8@example.com")
+
+    resp = await client.get("/api/v1/reviews", headers=auth_headers(member_token))
+    assert resp.status_code == 403
+
+
+async def test_review_queue_status_filter_excludes_other_statuses(client, db_session):
+    await make_user(db_session, email="member9@example.com", role=UserRole.member)
+    reviewer = await make_user(db_session, email="rev9@example.com", role=UserRole.reviewer)
+    member_token = await login(client, "member9@example.com")
+    reviewer_token = await login(client, "rev9@example.com")
+
+    v1 = await _create_agent_and_draft_version(client, member_token, "agent-q5")
+    await client.post(
+        f"/api/v1/versions/{v1}/submit",
+        headers=auth_headers(member_token),
+        json={"reviewer_ids": [str(reviewer.id)]},
+    )
+    resp = await client.get(
+        f"/api/v1/versions/{v1}/reviews", headers=auth_headers(member_token)
+    )
+    review_id = resp.json()[0]["id"]
+    await client.post(
+        f"/api/v1/reviews/{review_id}/decision",
+        headers=auth_headers(reviewer_token),
+        json={"result": "approved"},
+    )
+
+    resp = await client.get("/api/v1/reviews?status=pending", headers=auth_headers(reviewer_token))
+    assert resp.json()["total"] == 0
+
+    resp = await client.get("/api/v1/reviews?status=approved", headers=auth_headers(reviewer_token))
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["result"] == "approved"
