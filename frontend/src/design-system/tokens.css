@@ -1,0 +1,298 @@
+/*
+ * DESIGN TOKENS — c-agent-registry
+ * ------------------------------------------------------------------
+ * Status: approved (Phase 2, 2026-08-10). Active token source for
+ * every screen built or migrated from Phase 3 onward. See
+ * ../../../UI_AUDIT.md and ./COMPONENT_GUIDE.md for the proposal
+ * writeup and component-level rules this backs. Existing pre-Phase-3
+ * screens don't consume this yet — that's Phase 4.
+ *
+ * Three-layer structure (primitive → semantic → component), per
+ * UI_AUDIT.md Phase 2. Methodology (layering, dark-mode override
+ * strategy, "keep brand/status hue fixed across themes") follows the
+ * same approach already proven in /home/hank/tt_poc_agent_registry/web
+ * — the actual values below are new, not copied from it.
+ *
+ * Brand anchor: refined from the indigo (#4338CA) already scattered
+ * ad hoc across this app's AppLayout/AgentsTable/AgentDetail/Login
+ * (see UI_AUDIT.md §1) — daily users already associate that hue with
+ * this tool, so the system formalizes it instead of replacing it.
+ * Neutral ramp keeps continuity with the existing border/muted grays
+ * (#E4E6EC, #9AA0AC) for the same reason, but resolves the "two
+ * different muted grays with no rule" finding by making --gray-400 vs
+ * --gray-600 two explicitly distinct, named steps.
+ * ------------------------------------------------------------------
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* ============================================================
+   * LAYER 1 — PRIMITIVES
+   * ============================================================ */
+
+  /* --- Brand (indigo), 50→900 --- */
+  --p-brand-50: #eef0fe;
+  --p-brand-100: #e0e4fc;
+  --p-brand-200: #c7cdf9;
+  --p-brand-300: #a5aef5;
+  --p-brand-400: #7c87ed;
+  --p-brand-500: #5b67e3;
+  --p-brand-600: #4338ca; /* anchor — matches today's ad hoc brand hex */
+  --p-brand-700: #362da1;
+  --p-brand-800: #2b2480;
+  --p-brand-900: #221d66;
+
+  /* --- Neutral gray (cool/slate undertone), 0→900 --- */
+  --p-gray-0: #fbfbfd; /* off-white page bg, not pure white — see reference repo's rationale for glare control */
+  --p-gray-50: #f4f5f8;
+  --p-gray-100: #eaebf1;
+  --p-gray-200: #dcdee6; /* ≈ today's ad hoc border hex #E4E6EC */
+  --p-gray-300: #c3c6d2;
+  --p-gray-400: #9ca1b0; /* ≈ today's ad hoc muted hex #9AA0AC — "light muted": placeholders, icons, timestamps */
+  --p-gray-500: #7a8094;
+  --p-gray-600: #5b6072; /* ≈ today's ad hoc muted hex #6B7280 — "dark muted": secondary body text */
+  --p-gray-700: #434757;
+  --p-gray-800: #2b2e38;
+  --p-gray-900: #14161c;
+
+  /* --- Status hues (own values; conventional amber/green/red mapping kept
+     because that convention itself is domain-standard, not a copy of any
+     one repo's exact hex) --- */
+  --p-amber-500: #d3910f;
+  --p-amber-700: #b45309;
+  --p-emerald-500: #1c9350;
+  --p-emerald-700: #15803d;
+  --p-red-500: #d43d3d;
+  --p-red-700: #b91c1c;
+  --p-blue-500: #2e6fd9;
+
+  /* --- Categorical chart hues — for Reports/Ops charts. Chosen by
+     standard hue-separation heuristics (spread across the wheel, warm/cool
+     alternating, red and green not adjacent). NOT yet run through an
+     automated CVD validator — deliberately deferred (decided 2026-08-10)
+     until Phase 3 actually builds a chart (Statistics/Ops Dashboard), so
+     validation happens once against the real usage instead of twice.
+     TODO(Phase 3, before first chart ships): run the dataviz skill's
+     palette validator against --p-cat-1..5 + --p-cat-other, adjust here if
+     it flags a collision. */
+  --p-cat-1: #2e6fd9; /* blue */
+  --p-cat-2: #0f9e8e; /* teal */
+  --p-cat-3: #7c4fe0; /* violet */
+  --p-cat-4: #d98a1a; /* amber */
+  --p-cat-5: #d9467b; /* rose */
+  --p-cat-other: #9ca1b0;
+
+  /* --- Typography primitives --- */
+  --p-font-sans:
+    "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --p-font-mono:
+    "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  /* Compact scale — this is a dense data tool, not a marketing site;
+     default body text sits below the browser default (13px vs 16px),
+     matching the de facto ~12–13px cluster engineers were already
+     hand-picking across this app (see UI_AUDIT.md's fontSize survey). */
+  --p-text-2xs: 0.6875rem; /* 11px — micro labels, badge text */
+  --p-text-xs: 0.75rem; /* 12px — table cells, secondary text */
+  --p-text-sm: 0.8125rem; /* 13px — default body/UI text */
+  --p-text-md: 0.9375rem; /* 15px — emphasized body, section labels */
+  --p-text-lg: 1.0625rem; /* 17px — page subheading */
+  --p-text-xl: 1.375rem; /* 22px — page title (h1) */
+  --p-text-2xl: 1.75rem; /* 28px — stat-card / dashboard hero numbers */
+
+  --p-weight-normal: 400;
+  --p-weight-medium: 500;
+  --p-weight-semibold: 600;
+  --p-weight-bold: 700;
+
+  /* --- Spacing (4px grid) --- */
+  --p-space-0-5: 0.125rem; /* 2px */
+  --p-space-1: 0.25rem; /* 4px */
+  --p-space-2: 0.5rem; /* 8px */
+  --p-space-3: 0.75rem; /* 12px */
+  --p-space-4: 1rem; /* 16px */
+  --p-space-5: 1.25rem; /* 20px */
+  --p-space-6: 1.5rem; /* 24px */
+  --p-space-8: 2rem; /* 32px */
+  --p-space-10: 2.5rem; /* 40px */
+  --p-space-12: 3rem; /* 48px */
+  --p-space-16: 4rem; /* 64px */
+
+  /* --- Radius — kept small; this is a professional tool, not a
+     playful product, so nothing above 12px except pills --- */
+  --p-radius-xs: 4px; /* checkboxes, tiny chips */
+  --p-radius-sm: 6px; /* inputs, buttons */
+  --p-radius-md: 8px; /* cards, panels */
+  --p-radius-lg: 12px; /* modals, large panels */
+  --p-radius-full: 999px; /* pills, badges, avatars */
+
+  /* --- Shadow — restrained; one step up from "flat" --- */
+  --p-shadow-xs: 0 1px 2px rgba(20, 22, 28, 0.04);
+  --p-shadow-sm: 0 1px 3px rgba(20, 22, 28, 0.06), 0 1px 2px rgba(20, 22, 28, 0.04);
+  --p-shadow-md: 0 4px 10px rgba(20, 22, 28, 0.10);
+  --p-shadow-lg: 0 12px 24px rgba(20, 22, 28, 0.16);
+
+  --p-duration-fast: 120ms;
+  --p-duration-normal: 180ms;
+
+  /* ============================================================
+   * LAYER 2 — SEMANTIC (purpose aliases; theme switches happen here)
+   * ============================================================ */
+
+  --bg-page: var(--p-gray-0);
+  --bg-surface: var(--p-gray-0); /* cards, table body */
+  --bg-surface-2: var(--p-gray-50); /* section panels, table header */
+  --bg-surface-3: var(--p-gray-100); /* hover / zebra stripe */
+  --bg-overlay: rgba(20, 22, 28, 0.5); /* modal backdrop */
+
+  --fg-default: var(--p-gray-900);
+  --fg-muted: var(--p-gray-600); /* secondary body text — was #6B7280 ad hoc */
+  --fg-subtle: var(--p-gray-400); /* placeholders, icons, timestamps — was #9AA0AC ad hoc */
+  --fg-on-brand: #ffffff; /* text on brand-600 solid fills (indigo-600 is dark enough) */
+  --fg-on-brand-tint: var(--p-brand-700); /* text on brand-50/100 tint backgrounds */
+
+  --border-default: var(--p-gray-200);
+  --border-strong: var(--p-gray-300);
+
+  --color-brand: var(--p-brand-600);
+  --color-brand-hover: var(--p-brand-700);
+  --color-brand-active: var(--p-brand-800);
+  --color-brand-tint: var(--p-brand-50);
+  --color-focus-ring: var(--p-brand-400);
+
+  /* Status — outlined technique (color = border = text, no fill) for
+     scan-ability in a dense table; exactly one state per domain gets a
+     solid treatment to draw the eye (active/production/success), same
+     asymmetry the current app's Tag components already lean toward. */
+  --status-pending-fg: var(--p-amber-700);
+  --status-pending-border: var(--p-amber-500);
+  --status-success-fg: var(--p-emerald-700);
+  --status-success-border: var(--p-emerald-500);
+  --status-success-solid-bg: var(--p-emerald-700);
+  --status-danger-fg: var(--p-red-700);
+  --status-danger-border: var(--p-red-500);
+  --status-info-fg: var(--p-blue-500);
+  --status-info-border: var(--p-blue-500);
+  --status-neutral-fg: var(--fg-muted);
+  --status-neutral-border: var(--border-strong);
+
+  --chart-cat-1: var(--p-cat-1);
+  --chart-cat-2: var(--p-cat-2);
+  --chart-cat-3: var(--p-cat-3);
+  --chart-cat-4: var(--p-cat-4);
+  --chart-cat-5: var(--p-cat-5);
+  --chart-cat-other: var(--p-cat-other);
+  --chart-good: var(--p-emerald-700);
+  --chart-warning: var(--p-amber-700);
+  --chart-critical: var(--p-red-700);
+
+  --font-sans: var(--p-font-sans);
+  --font-mono: var(--p-font-mono);
+
+  font-family: var(--font-sans);
+}
+
+/* Dark theme — invert the neutral ramp; keep brand hue fixed (only its
+   on-* pairing token changes) and lighten status/chart hues ~8-12% for
+   legibility on a dark surface, same technique as the reference repo's
+   --ops-cat-* dark overrides. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --p-gray-0: #14161c;
+  --p-gray-50: #1b1e26;
+  --p-gray-100: #242833;
+  --p-gray-200: #343948;
+  --p-gray-300: #454b5e;
+  --p-gray-400: #7a8094;
+  --p-gray-500: #9aa0b4;
+  --p-gray-600: #b8bdce;
+  --p-gray-700: #d3d6e0;
+  --p-gray-800: #e7e9ef;
+  --p-gray-900: #f7f8fa;
+
+  --bg-overlay: rgba(0, 0, 0, 0.6);
+  --fg-on-brand-tint: var(--p-brand-300);
+  --color-brand-tint: color-mix(in srgb, var(--p-brand-500) 18%, transparent);
+
+  --status-pending-fg: #d99a3d;
+  --status-pending-border: #d99a3d;
+  --status-success-fg: #34a85f;
+  --status-success-border: #34a85f;
+  --status-success-solid-bg: #1f9455;
+  --status-danger-fg: #e2585b;
+  --status-danger-border: #e2585b;
+  --status-info-fg: #5a94e8;
+  --status-info-border: #5a94e8;
+
+  --chart-cat-1: #4e8ce6;
+  --chart-cat-2: #29b6a4;
+  --chart-cat-3: #9470e8;
+  --chart-cat-4: #e6a13a;
+  --chart-cat-5: #e6659a;
+  --chart-good: #34a85f;
+  --chart-warning: #d99a3d;
+  --chart-critical: #e2585b;
+
+  --p-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --p-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --p-shadow-md: 0 4px 10px rgba(0, 0, 0, 0.45);
+  --p-shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* ============================================================
+ * LAYER 3 — COMPONENT TOKENS (see COMPONENT_GUIDE.md for the
+ * written rules these back)
+ * ============================================================ */
+:root {
+  /* Button */
+  --button-height: 32px;
+  --button-height-sm: 26px;
+  --button-padding-x: var(--p-space-4);
+  --button-radius: var(--p-radius-sm);
+  --button-font-size: var(--p-text-sm);
+  --button-font-weight: var(--p-weight-medium);
+
+  /* Input / Select */
+  --input-height: 32px; /* matches --button-height so filter bars align */
+  --input-padding-x: var(--p-space-3);
+  --input-radius: var(--p-radius-sm);
+  --input-border: var(--border-default);
+  --input-focus-ring: var(--color-focus-ring);
+
+  /* Card */
+  --card-bg: var(--bg-surface);
+  --card-border: var(--border-default);
+  --card-radius: var(--p-radius-md);
+  --card-padding: var(--p-space-4);
+  --card-shadow: var(--p-shadow-xs);
+  --card-shadow-hover: var(--p-shadow-sm);
+
+  /* Stat card */
+  --stat-value-size: var(--p-text-2xl);
+  --stat-label-size: var(--p-text-xs);
+  --stat-min-height: 5rem;
+
+  /* Badge / status pill */
+  --badge-padding-x: var(--p-space-2);
+  --badge-padding-y: 0.1rem;
+  --badge-radius: var(--p-radius-full);
+  --badge-font-size: var(--p-text-2xs);
+
+  /* Table — row height deliberately below the generic "compact" spec
+     default (40px) because information density outranks comfort here;
+     see COMPONENT_GUIDE.md for when to step up to the taller row. */
+  --table-row-height: 34px;
+  --table-cell-padding-x: var(--p-space-3);
+  --table-cell-padding-y: var(--p-space-2);
+  --table-header-bg: var(--bg-surface-2);
+  --table-header-fg: var(--fg-muted);
+  --table-stripe-bg: var(--bg-surface-2);
+  --table-hover-bg: var(--bg-surface-3);
+  --table-border: var(--border-default);
+}
