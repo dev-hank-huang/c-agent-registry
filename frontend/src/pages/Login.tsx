@@ -39,7 +39,7 @@ export default function Login() {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "radial-gradient(600px 400px at 15% 10%, #EEF0FE, transparent 60%), #F6F7FA",
+          "radial-gradient(600px 400px at 15% 10%, var(--color-brand-tint), transparent 60%), var(--bg-surface-2)",
         padding: 24,
       }}
     >
@@ -47,8 +47,8 @@ export default function Login() {
         style={{
           width: "100%",
           maxWidth: 380,
-          background: "#fff",
-          border: "1px solid #E4E6EC",
+          background: "var(--card-bg)",
+          border: "1px solid var(--card-border)",
           borderRadius: 12,
           boxShadow: "0 8px 24px rgba(20, 24, 38, 0.12)",
           padding: "36px 32px 28px",
@@ -60,8 +60,8 @@ export default function Login() {
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: "#4338CA",
-              color: "#fff",
+              background: "var(--color-brand)",
+              color: "var(--fg-on-brand)",
               fontWeight: 700,
               fontSize: 15,
               display: "flex",
@@ -74,7 +74,7 @@ export default function Login() {
           </div>
           <div>
             <div style={{ fontWeight: 650, fontSize: 16 }}>Agent Registry</div>
-            <div style={{ fontSize: 12, color: "#9AA0AC" }}>{t("login.subtitle")}</div>
+            <div style={{ fontSize: 12, color: "var(--fg-subtle)" }}>{t("login.subtitle")}</div>
           </div>
         </div>
 
@@ -107,7 +107,7 @@ export default function Login() {
           </Button>
         </Form>
 
-        <Divider plain style={{ fontSize: 12, color: "#9AA0AC" }}>
+        <Divider plain style={{ fontSize: 12, color: "var(--fg-subtle)" }}>
           {t("login.or")}
         </Divider>
 
