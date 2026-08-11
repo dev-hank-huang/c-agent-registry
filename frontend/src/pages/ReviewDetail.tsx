@@ -14,6 +14,7 @@ import {
   Typography,
 } from "antd";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { decideReview, getReview } from "../api/reviews";
@@ -22,6 +23,7 @@ import { getVersion, listDependencies } from "../api/versions";
 import { ReviewResultTag, VersionStatusTag } from "../components/tags";
 
 export default function ReviewDetail() {
+  const { t } = useTranslation();
   const { message } = App.useApp();
   const { reviewId } = useParams<{ reviewId: string }>();
   const { user } = useAuth();
@@ -63,7 +65,7 @@ export default function ReviewDetail() {
     mutationFn: ({ result, comment }: { result: "approved" | "rejected"; comment?: string }) =>
       decideReview(reviewId!, result, comment),
     onSuccess: () => {
-      message.success("已送出審核結果");
+      message.success(t("reviewDetail.submitResultSuccess"));
       queryClient.invalidateQueries({ queryKey: ["review", reviewId] });
       queryClient.invalidateQueries({ queryKey: ["reviews-mine"] });
       if (versionSlug) {
@@ -73,7 +75,7 @@ export default function ReviewDetail() {
     },
     onError: (e: unknown) => {
       const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      message.error(msg ?? "操作失敗，這筆審核可能已被處理");
+      message.error(msg ?? t("reviewDetail.actionFailed"));
     },
   });
 
@@ -94,7 +96,7 @@ export default function ReviewDetail() {
   const submit = (result: "approved" | "rejected") => {
     const comment = (form.getFieldValue("comment") as string | undefined)?.trim();
     if (result === "rejected" && !comment) {
-      form.setFields([{ name: "comment", errors: ["退回時必須填寫原因，讓提交者知道要改什麼"] }]);
+      form.setFields([{ name: "comment", errors: [t("reviewDetail.commentRequired")] }]);
       return;
     }
     decisionMutation.mutate({ result, comment: comment || undefined });
@@ -103,28 +105,28 @@ export default function ReviewDetail() {
   return (
     <div>
       <Breadcrumb
-        items={[{ title: <Link to="/reviews">待我審核</Link> }, { title: versionSlug ?? "…" }]}
+        items={[{ title: <Link to="/reviews">{t("reviewDetail.breadcrumb")}</Link> }, { title: versionSlug ?? "…" }]}
         style={{ marginBottom: 8, fontSize: 12.5 }}
       />
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
         <Typography.Title level={3} style={{ marginBottom: 0 }}>
-          審核：{versionSlug}
+          {t("reviewDetail.title", { slug: versionSlug })}
         </Typography.Title>
         <ReviewResultTag result={review.result} />
       </div>
 
-      <Card title="版本內容" size="small" style={{ marginBottom: 18 }}>
+      <Card title={t("reviewDetail.versionContentTitle")} size="small" style={{ marginBottom: 18 }}>
         {version ? (
           <>
             <Descriptions column={1} size="small" style={{ marginBottom: 12 }}>
-              <Descriptions.Item label="狀態">
+              <Descriptions.Item label={t("common.status")}>
                 <VersionStatusTag status={version.status} />
               </Descriptions.Item>
               <Descriptions.Item label="Endpoint URL">
-                {version.url ?? <Typography.Text type="secondary">（無）</Typography.Text>}
+                {version.url ?? <Typography.Text type="secondary">{t("common.none")}</Typography.Text>}
               </Descriptions.Item>
-              <Descriptions.Item label="Streaming">{version.streaming ? "是" : "否"}</Descriptions.Item>
+              <Descriptions.Item label={t("reviewDetail.streamingLabel")}>{version.streaming ? t("common.yes") : t("common.no")}</Descriptions.Item>
               <Descriptions.Item label="Input Modes">
                 {version.default_input_modes.length ? (
                   <Space wrap>
@@ -133,7 +135,7 @@ export default function ReviewDetail() {
                     ))}
                   </Space>
                 ) : (
-                  <Typography.Text type="secondary">（無）</Typography.Text>
+                  <Typography.Text type="secondary">{t("common.none")}</Typography.Text>
                 )}
               </Descriptions.Item>
               <Descriptions.Item label="Output Modes">
@@ -144,13 +146,13 @@ export default function ReviewDetail() {
                     ))}
                   </Space>
                 ) : (
-                  <Typography.Text type="secondary">（無）</Typography.Text>
+                  <Typography.Text type="secondary">{t("common.none")}</Typography.Text>
                 )}
               </Descriptions.Item>
             </Descriptions>
 
             <div style={{ fontSize: 11.5, fontWeight: 600, color: "#9AA0AC", marginBottom: 8 }}>
-              依賴的 SKILL / MCP
+              {t("reviewDetail.dependenciesTitle")}
             </div>
             {depsQuery.data && depsQuery.data.length > 0 ? (
               <Space wrap style={{ marginBottom: 12 }}>
@@ -168,28 +170,28 @@ export default function ReviewDetail() {
               </Space>
             ) : (
               <Empty
-                description="尚未加入任何依賴"
+                description={t("reviewDetail.dependenciesEmpty")}
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 style={{ margin: "8px 0 12px" }}
               />
             )}
 
-            <Link to={`/agents/${agentSlug}/versions/${versionSlug}`}>在 Agent 詳情頁查看 →</Link>
+            <Link to={`/agents/${agentSlug}/versions/${versionSlug}`}>{t("reviewDetail.viewInAgentDetail")}</Link>
           </>
         ) : (
           <Spin />
         )}
       </Card>
 
-      <Card title="審核意見" size="small">
+      <Card title={t("reviewDetail.commentsTitle")} size="small">
         {canDecide ? (
           <Form form={form} layout="vertical">
             <Form.Item
               label="Comment"
               name="comment"
-              extra="退回時必須填寫原因；核准則為選填。"
+              extra={t("reviewDetail.commentExtra")}
             >
-              <Input.TextArea rows={4} placeholder="給提交者的意見…" />
+              <Input.TextArea rows={4} placeholder={t("reviewDetail.commentPlaceholder")} />
             </Form.Item>
             <Space>
               <Button
@@ -197,19 +199,19 @@ export default function ReviewDetail() {
                 loading={decisionMutation.isPending}
                 onClick={() => submit("approved")}
               >
-                核准
+                {t("reviewDetail.approve")}
               </Button>
               <Button danger loading={decisionMutation.isPending} onClick={() => submit("rejected")}>
-                退回
+                {t("reviewDetail.reject")}
               </Button>
             </Space>
           </Form>
         ) : isPending ? (
-          <Typography.Text type="secondary">這不是指派給你的審核項目，無法操作。</Typography.Text>
+          <Typography.Text type="secondary">{t("reviewDetail.notAssigned")}</Typography.Text>
         ) : (
           <div>
             <div style={{ marginBottom: review.comment ? 10 : 0 }}>
-              結果：<ReviewResultTag result={review.result} />
+              {t("reviewDetail.result")}<ReviewResultTag result={review.result} />
             </div>
             {review.comment && (
               <Typography.Paragraph style={{ whiteSpace: "pre-wrap", marginBottom: 0 }}>

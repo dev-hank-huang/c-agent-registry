@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { getReviewSummary } from "../api/reviews";
 import Leaderboard from "../components/Leaderboard";
@@ -11,6 +12,7 @@ const COLOR_REJECTED = "var(--chart-critical)";
 // Aggregate/statistical view of review activity — for the working queue (approving/
 // rejecting a specific pending request), see Review Queue instead.
 export default function AdminReviewSummary() {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-review-summary"],
     queryFn: getReviewSummary,
@@ -21,9 +23,11 @@ export default function AdminReviewSummary() {
 
   return (
     <div>
-      <h1 style={{ fontSize: "var(--p-text-xl)", fontWeight: 700, margin: "0 0 4px" }}>Review Summary</h1>
+      <h1 style={{ fontSize: "var(--p-text-xl)", fontWeight: 700, margin: "0 0 4px" }}>{t("nav.reviewSummary")}</h1>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-4)" }}>
-        整體審核活動的統計數據。要處理特定待審項目，請見 <Link to="/review-queue">Review Queue</Link>。
+        <Trans i18nKey="adminReviewSummary.description">
+          整體審核活動的統計數據。要處理特定待審項目，請見 <Link to="/review-queue">Review Queue</Link>。
+        </Trans>
       </p>
 
       <div className="stat-grid">

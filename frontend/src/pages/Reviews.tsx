@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Segmented, Table, Typography } from "antd";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { listMyReviews } from "../api/reviews";
 import type { Review } from "../api/types";
 import { ReviewResultTag } from "../components/tags";
+import { useFormatters } from "../lib/relativeTime";
 
 export default function Reviews() {
+  const { t } = useTranslation();
+  const { formatDateTime } = useFormatters();
   const navigate = useNavigate();
   const [pendingOnly, setPendingOnly] = useState(true);
 
@@ -29,18 +33,18 @@ export default function Reviews() {
       >
         <div>
           <Typography.Title level={3} style={{ marginBottom: 4 }}>
-            待我審核
+            {t("reviews.title")}
           </Typography.Title>
           <Typography.Text type="secondary">
-            指定給你的送審項目，點進去查看版本內容、核准或退回。
+            {t("reviews.description")}
           </Typography.Text>
         </div>
         <Segmented
           value={pendingOnly ? "pending" : "all"}
           onChange={(v) => setPendingOnly(v === "pending")}
           options={[
-            { label: "待審", value: "pending" },
-            { label: "全部", value: "all" },
+            { label: t("reviews.pending"), value: "pending" },
+            { label: t("reviews.all"), value: "all" },
           ]}
         />
       </div>
@@ -50,21 +54,21 @@ export default function Reviews() {
         loading={isLoading}
         dataSource={reviews}
         pagination={false}
-        locale={{ emptyText: pendingOnly ? "目前沒有待審項目" : "尚無審核紀錄" }}
+        locale={{ emptyText: pendingOnly ? t("reviews.emptyPending") : t("reviews.emptyAll") }}
         onRow={(record: Review) => ({
           style: { cursor: "pointer" },
           onClick: () => navigate(`/reviews/${record.id}`),
         })}
         columns={[
-          { title: "版本", dataIndex: "agent_slug" },
-          { title: "優先度", dataIndex: "priority" },
+          { title: t("common.version"), dataIndex: "agent_slug" },
+          { title: t("reviews.priorityCol"), dataIndex: "priority" },
           {
-            title: "送審時間",
+            title: t("reviews.submittedAtCol"),
             dataIndex: "created_at",
-            render: (v: string) => new Date(v).toLocaleString(),
+            render: (v: string) => formatDateTime(v),
           },
           {
-            title: "狀態",
+            title: t("common.status"),
             dataIndex: "result",
             render: (result: Review["result"]) => <ReviewResultTag result={result} />,
           },

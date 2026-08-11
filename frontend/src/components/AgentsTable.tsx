@@ -1,21 +1,13 @@
 import { Avatar, Table } from "antd";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { Agent } from "../api/types";
+import { useFormatters } from "../lib/relativeTime";
 import { VisibilityTag } from "./tags";
 
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "剛剛";
-  if (mins < 60) return `${mins} 分鐘前`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} 小時前`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} 天前`;
-  return new Date(iso).toLocaleDateString();
-}
-
 export default function AgentsTable({ agents, loading }: { agents: Agent[]; loading: boolean }) {
+  const { t } = useTranslation();
+  const { formatRelativeTime } = useFormatters();
   const navigate = useNavigate();
 
   return (
@@ -31,7 +23,7 @@ export default function AgentsTable({ agents, loading }: { agents: Agent[]; load
       scroll={{ x: 640 }}
       columns={[
         {
-          title: "名稱",
+          title: t("common.name"),
           dataIndex: "name",
           render: (_: string, record: Agent) => (
             <div>
@@ -47,12 +39,12 @@ export default function AgentsTable({ agents, loading }: { agents: Agent[]; load
         },
         { title: "Provider", dataIndex: "provider", render: (p: string | null) => p ?? "—" },
         {
-          title: "更新時間",
+          title: t("common.updatedAt"),
           dataIndex: "updated_at",
-          render: (v: string) => timeAgo(v),
+          render: (v: string) => formatRelativeTime(v),
         },
       ]}
-      locale={{ emptyText: "目前沒有 agent" }}
+      locale={{ emptyText: t("agentsTable.empty") }}
       style={{ background: "#fff" }}
     />
   );

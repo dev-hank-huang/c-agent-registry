@@ -14,11 +14,15 @@ import {
 } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createSkill, listSkills, syncSkills } from "../api/skills";
 import type { CreateSkillInput } from "../api/skills";
 import type { Skill } from "../api/types";
+import { useFormatters } from "../lib/relativeTime";
 
 export default function RegistrySkills() {
+  const { t } = useTranslation();
+  const { formatDateTime } = useFormatters();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -30,21 +34,21 @@ export default function RegistrySkills() {
   const createMutation = useMutation({
     mutationFn: createSkill,
     onSuccess: () => {
-      message.success("Skill 已建立");
+      message.success(t("registry.createSuccess", { item: "Skill" }));
       queryClient.invalidateQueries({ queryKey: ["skills"] });
       setCreateOpen(false);
       form.resetFields();
     },
-    onError: () => message.error("建立失敗"),
+    onError: () => message.error(t("common.createFailed")),
   });
 
   const syncMutation = useMutation({
     mutationFn: syncSkills,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
-      message.success(`同步完成：${result.available} 個可用、${result.unavailable} 個不可用`);
+      message.success(t("registry.syncComplete", { available: result.available, unavailable: result.unavailable }));
     },
-    onError: () => message.error("同步失敗"),
+    onError: () => message.error(t("common.syncFailed")),
   });
 
   const lastSyncedAt = useMemo(() => {
@@ -73,7 +77,7 @@ export default function RegistrySkills() {
           <Typography.Title level={3} style={{ marginBottom: 4 }}>
             Registry · Skill
           </Typography.Title>
-          <Typography.Text type="secondary">可重複使用、跨 agent 掛載的 skill 清單。</Typography.Text>
+          <Typography.Text type="secondary">{t("registry.skillDescription")}</Typography.Text>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Button
@@ -81,10 +85,10 @@ export default function RegistrySkills() {
             loading={syncMutation.isPending}
             onClick={() => syncMutation.mutate()}
           >
-            同步
+            {t("registry.sync")}
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-            新增 Skill
+            {t("registry.addSkill")}
           </Button>
         </div>
       </div>
@@ -105,13 +109,13 @@ export default function RegistrySkills() {
         }}
       >
         <span style={{ color: "#5B6270" }}>
-          {lastSyncedAt ? `上次同步：${new Date(lastSyncedAt).toLocaleString()}` : "尚未同步"}
+          {lastSyncedAt ? t("registry.lastSynced", { date: formatDateTime(lastSyncedAt) }) : t("common.notSyncedYet")}
           {" · "}
-          可用 {availableCount} · 不可用 {unavailableCount}
+          {t("registry.availableCount", { available: availableCount, unavailable: unavailableCount })}
         </span>
         <Switch
-          checkedChildren="顯示不可用項目"
-          unCheckedChildren="只顯示可用項目"
+          checkedChildren={t("registry.showUnavailable")}
+          unCheckedChildren={t("registry.showAvailableOnly")}
           checked={showUnavailable}
           onChange={setShowUnavailable}
         />
@@ -124,7 +128,7 @@ export default function RegistrySkills() {
         pagination={false}
         columns={[
           {
-            title: "名稱",
+            title: t("common.name"),
             dataIndex: "name",
             render: (_: string, r: Skill) => (
               <div>
@@ -133,33 +137,33 @@ export default function RegistrySkills() {
               </div>
             ),
           },
-          { title: "分類", dataIndex: "category", render: (v: string | null) => v ?? "—" },
+          { title: t("common.category"), dataIndex: "category", render: (v: string | null) => v ?? "—" },
           {
-            title: "狀態",
+            title: t("common.status"),
             dataIndex: "status",
             render: (s: Skill["status"]) =>
               s === "available" ? (
-                <Tag color="green">可用</Tag>
+                <Tag color="green">{t("registry.available")}</Tag>
               ) : (
-                <Tag color="red">不可用</Tag>
+                <Tag color="red">{t("registry.unavailable")}</Tag>
               ),
           },
           {
-            title: "更新時間",
+            title: t("common.updatedAt"),
             dataIndex: "updated_at",
-            render: (v: string) => new Date(v).toLocaleString(),
+            render: (v: string) => formatDateTime(v),
           },
         ]}
       />
 
       <Modal
-        title="新增 Skill"
+        title={t("registry.addSkill")}
         open={createOpen}
         onCancel={() => setCreateOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={createMutation.isPending}
-        okText="上傳"
-        cancelText="取消"
+        okText={t("registry.uploadOk")}
+        cancelText={t("common.cancel")}
       >
         <Form
           form={form}
@@ -167,33 +171,33 @@ export default function RegistrySkills() {
           onFinish={(v) => {
             const file = v.file?.[0]?.originFileObj as File | undefined;
             if (!file) {
-              message.error("請選擇檔案");
+              message.error(t("common.selectFile"));
               return;
             }
             createMutation.mutate({ ...v, file });
           }}
         >
-          <Form.Item label="名稱" name="name" rules={[{ required: true }]}>
+          <Form.Item label={t("common.name")} name="name" rules={[{ required: true }]}>
             <Input placeholder="pdf-ocr-extract" />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+          <Form.Item label={t("registry.versionLabel")} name="version" rules={[{ required: true }]}>
             <Input placeholder="1.0.0" />
           </Form.Item>
-          <Form.Item label="分類" name="category">
+          <Form.Item label={t("common.category")} name="category">
             <Input placeholder="extraction" />
           </Form.Item>
-          <Form.Item label="描述" name="description">
+          <Form.Item label={t("common.description")} name="description">
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item
-            label="檔案"
+            label={t("registry.fileLabel")}
             name="file"
             valuePropName="fileList"
             getValueFromEvent={(e) => e?.fileList}
-            rules={[{ required: true, message: "請選擇檔案" }]}
+            rules={[{ required: true, message: t("common.selectFile") }]}
           >
             <Upload beforeUpload={() => false} maxCount={1}>
-              <Button icon={<UploadOutlined />}>選擇檔案</Button>
+              <Button icon={<UploadOutlined />}>{t("registry.selectFileBtn")}</Button>
             </Upload>
           </Form.Item>
         </Form>

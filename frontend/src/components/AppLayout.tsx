@@ -4,6 +4,7 @@ import {
   CompassOutlined,
   DatabaseOutlined,
   DownOutlined,
+  GlobalOutlined,
   LogoutOutlined,
   MenuOutlined,
   ToolOutlined,
@@ -12,8 +13,32 @@ import {
 } from "@ant-design/icons";
 import { Avatar, Button, Drawer, Dropdown, Grid, Layout, Menu, Tag } from "antd";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import type { SupportedLanguage } from "../i18n";
+
+function LanguageSwitcher() {
+  const { t, i18n } = useTranslation();
+  const current: SupportedLanguage = i18n.language.startsWith("en") ? "en" : "zh";
+
+  return (
+    <Dropdown
+      menu={{
+        selectedKeys: [current],
+        items: [
+          { key: "zh", label: t("nav.languageZh") },
+          { key: "en", label: t("nav.languageEn") },
+        ],
+        onClick: ({ key }) => i18n.changeLanguage(key),
+      }}
+    >
+      <Button type="text" icon={<GlobalOutlined />} aria-label={t("nav.language")}>
+        {current === "zh" ? t("nav.languageZh") : t("nav.languageEn")}
+      </Button>
+    </Dropdown>
+  );
+}
 
 const { Header, Sider, Content } = Layout;
 
@@ -43,6 +68,7 @@ function Brand() {
 }
 
 export default function AppLayout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,29 +104,29 @@ export default function AppLayout() {
   };
 
   const menuItems = [
-    { key: "browse", icon: <CompassOutlined />, label: "Browse", onClick: () => go("/") },
+    { key: "browse", icon: <CompassOutlined />, label: t("nav.browse"), onClick: () => go("/") },
     {
       key: "agent-mgmt",
       icon: <AppstoreOutlined />,
-      label: "Agent Management",
-      children: [{ key: "my-agents", label: "My Agents", onClick: () => go("/my-agents") }],
+      label: t("nav.agentManagement"),
+      children: [{ key: "my-agents", label: t("nav.myAgents"), onClick: () => go("/my-agents") }],
     },
     {
       key: "reviews",
       icon: <UsergroupAddOutlined />,
-      label: "Reviews",
+      label: t("nav.reviews"),
       children: [
-        { key: "review-queue", label: "Review Queue", onClick: () => go("/review-queue") },
+        { key: "review-queue", label: t("nav.reviewQueue"), onClick: () => go("/review-queue") },
         ...(user.role === "admin"
-          ? [{ key: "review-summary", label: "Review Summary", onClick: () => go("/admin/review-summary") }]
+          ? [{ key: "review-summary", label: t("nav.reviewSummary"), onClick: () => go("/admin/review-summary") }]
           : []),
-        { key: "my-reviews", label: "My Reviews", onClick: () => go("/reviews") },
+        { key: "my-reviews", label: t("nav.myReviews"), onClick: () => go("/reviews") },
       ],
     },
     {
       key: "skills",
       icon: <ToolOutlined />,
-      label: "Skills & MCP",
+      label: t("nav.skillsAndMcp"),
       onClick: () => go("/skills"),
     },
     ...(user.role === "admin"
@@ -108,30 +134,30 @@ export default function AppLayout() {
           {
             key: "admin",
             icon: <UserOutlined />,
-            label: "Governance",
+            label: t("nav.governance"),
             children: [
-              { key: "admin-users", label: "Users", onClick: () => go("/admin/users") },
-              { key: "admin-user-summary", label: "User Summary", onClick: () => go("/admin/user-summary") },
-              { key: "admin-agents", label: "Agents", onClick: () => go("/admin/agents") },
-              { key: "admin-agent-summary", label: "Agent Summary", onClick: () => go("/admin/agent-summary") },
+              { key: "admin-users", label: t("nav.users"), onClick: () => go("/admin/users") },
+              { key: "admin-user-summary", label: t("nav.userSummary"), onClick: () => go("/admin/user-summary") },
+              { key: "admin-agents", label: t("nav.agents"), onClick: () => go("/admin/agents") },
+              { key: "admin-agent-summary", label: t("nav.agentSummary"), onClick: () => go("/admin/agent-summary") },
             ],
           },
           {
             key: "registry",
             icon: <DatabaseOutlined />,
-            label: "Registry",
+            label: t("nav.registry"),
             children: [
-              { key: "admin-agent-templates", label: "Agent Templates", onClick: () => go("/admin/agent-templates") },
-              { key: "registry-mcps", label: "MCP", onClick: () => go("/registry/mcps") },
-              { key: "registry-models", label: "Model", onClick: () => go("/registry/models") },
-              { key: "admin-skillhub-registry", label: "SkillHub Registry", onClick: () => go("/admin/skillhub-registry") },
+              { key: "admin-agent-templates", label: t("nav.agentTemplates"), onClick: () => go("/admin/agent-templates") },
+              { key: "registry-mcps", label: t("nav.mcp"), onClick: () => go("/registry/mcps") },
+              { key: "registry-models", label: t("nav.model"), onClick: () => go("/registry/models") },
+              { key: "admin-skillhub-registry", label: t("nav.skillhubRegistry"), onClick: () => go("/admin/skillhub-registry") },
             ],
           },
           {
             key: "reports",
             icon: <BarChartOutlined />,
-            label: "Reports",
-            children: [{ key: "admin-stats", label: "Statistics", onClick: () => go("/admin/stats") }],
+            label: t("nav.reports"),
+            children: [{ key: "admin-stats", label: t("nav.statistics"), onClick: () => go("/admin/stats") }],
           },
         ]
       : []),
@@ -185,44 +211,47 @@ export default function AppLayout() {
               type="text"
               icon={<MenuOutlined />}
               onClick={() => setDrawerOpen(true)}
-              aria-label="開啟選單"
+              aria-label={t("nav.openMenu")}
             />
           ) : (
             <span />
           )}
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "logout",
-                  icon: <LogoutOutlined />,
-                  label: "登出",
-                  onClick: () => {
-                    logout();
-                    navigate("/login");
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <LanguageSwitcher />
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: "logout",
+                    icon: <LogoutOutlined />,
+                    label: t("nav.logout"),
+                    onClick: () => {
+                      logout();
+                      navigate("/login");
+                    },
                   },
-                },
-              ],
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }}>
-              <Avatar size={26} style={{ background: "#EEF0FE", color: "#4338CA" }}>
-                {initial}
-              </Avatar>
-              {!isMobile && (
-                <div style={{ lineHeight: 1.3 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
-                  <Tag
-                    color={user.role === "admin" ? "blue" : user.role === "reviewer" ? "cyan" : "default"}
-                    style={{ marginTop: 1, fontSize: 10, lineHeight: "14px", padding: "0 5px" }}
-                  >
-                    {user.role}
-                  </Tag>
-                </div>
-              )}
-              <DownOutlined style={{ fontSize: 11, color: "#9AA0AC" }} />
-            </div>
-          </Dropdown>
+                ],
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }}>
+                <Avatar size={26} style={{ background: "#EEF0FE", color: "#4338CA" }}>
+                  {initial}
+                </Avatar>
+                {!isMobile && (
+                  <div style={{ lineHeight: 1.3 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
+                    <Tag
+                      color={user.role === "admin" ? "blue" : user.role === "reviewer" ? "cyan" : "default"}
+                      style={{ marginTop: 1, fontSize: 10, lineHeight: "14px", padding: "0 5px" }}
+                    >
+                      {user.role}
+                    </Tag>
+                  </div>
+                )}
+                <DownOutlined style={{ fontSize: 11, color: "#9AA0AC" }} />
+              </div>
+            </Dropdown>
+          </div>
         </Header>
         <Content
           style={{

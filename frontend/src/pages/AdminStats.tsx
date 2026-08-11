@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getStats } from "../api/admin";
 import StatCard from "../components/StatCard";
 import TrendChart from "../components/TrendChart";
@@ -22,6 +23,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default function AdminStats() {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: getStats,
@@ -37,12 +39,12 @@ export default function AdminStats() {
     <div>
       <h1 style={{ fontSize: "var(--p-text-xl)", fontWeight: 700, margin: "0 0 4px" }}>Statistics</h1>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-2)" }}>
-        整個系統的總覽儀表板。
+        {t("adminStats.description")}
       </p>
 
       <h2 style={{ fontSize: "var(--p-text-lg)", fontWeight: 700, margin: "var(--p-space-6) 0 var(--p-space-1)" }}>Needs attention</h2>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-2)" }}>
-        從各頁自己的統計數據抓出來的重點訊號，點卡片看完整內容。
+        {t("adminStats.subDescription")}
       </p>
       <div className="stat-grid">
         <StatCard to="/admin/agent-summary" value={data.agentsWithoutProductionCount} label="Agents without an active version" />

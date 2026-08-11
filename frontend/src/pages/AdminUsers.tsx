@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Form, Input, Modal, Select } from "antd";
 import { Eye, Pencil, Search, ShieldCheck, User as UserIcon, UserX, X } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createUser, deleteUser, listUsers, updateUser } from "../api/users";
 import type { CreateUserInput } from "../api/users";
 import type { User, UserRole, UserSort, UserStatus } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import Pagination from "../components/Pagination";
+import { useFormatters } from "../lib/relativeTime";
 
 const ROLE_OPTIONS: UserRole[] = ["member", "reviewer", "admin"];
 const ROLE_ICONS: Record<UserRole, typeof ShieldCheck> = {
@@ -33,7 +35,9 @@ interface DraftEdit {
 }
 
 export default function AdminUsers() {
-  const { message } = App.useApp();
+  const { t } = useTranslation();
+  const { formatDate } = useFormatters();
+  const { message, modal } = App.useApp();
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -79,12 +83,12 @@ export default function AdminUsers() {
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
-      message.success("使用者已建立");
+      message.success(t("adminUsers.createSuccess"));
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setCreateOpen(false);
       form.resetFields();
     },
-    onError: () => message.error("建立失敗，email 可能已被使用"),
+    onError: () => message.error(t("adminUsers.createFailed")),
   });
 
   function startEdit(user: User) {
@@ -113,18 +117,26 @@ export default function AdminUsers() {
     }
   }
 
-  async function deactivate(user: User) {
-    if (!window.confirm(`永久刪除「${user.name}」？此動作無法復原，對方將無法再登入。`)) return;
-    setBusyId(user.id);
-    setError(null);
-    try {
-      await deleteUser(user.id);
-      await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-    } catch {
-      setError("Failed to delete this user.");
-    } finally {
-      setBusyId(null);
-    }
+  function deactivate(user: User) {
+    modal.confirm({
+      title: t("adminUsers.deleteOneConfirmTitle"),
+      content: t("adminUsers.deleteOneConfirmContent", { name: user.name }),
+      okText: t("common.delete"),
+      okButtonProps: { danger: true },
+      cancelText: t("common.cancel"),
+      onOk: async () => {
+        setBusyId(user.id);
+        setError(null);
+        try {
+          await deleteUser(user.id);
+          await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        } catch {
+          setError("Failed to delete this user.");
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
   const selectableIds = (data?.items ?? []).filter((u) => u.id !== currentUser?.id).map((u) => u.id);
@@ -143,20 +155,28 @@ export default function AdminUsers() {
     setSelected(allSelected ? new Set() : new Set(selectableIds));
   }
 
-  async function bulkDeactivate() {
+  function bulkDeactivate() {
     const ids = [...selected];
     if (ids.length === 0) return;
-    if (!window.confirm(`永久刪除選取的 ${ids.length} 位使用者？此動作無法復原。`)) return;
-    setBulkBusy(true);
-    setError(null);
-    const results = await Promise.allSettled(ids.map((id) => deleteUser(id)));
-    const failures = results.filter((r) => r.status === "rejected").length;
-    if (failures > 0) {
-      setError(`已刪除 ${ids.length - failures} / ${ids.length} 位選取的使用者，${failures} 筆失敗。`);
-    }
-    setSelected(new Set());
-    await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-    setBulkBusy(false);
+    modal.confirm({
+      title: t("adminUsers.deleteManyConfirmTitle"),
+      content: t("adminUsers.deleteManyConfirmContent", { count: ids.length }),
+      okText: t("common.delete"),
+      okButtonProps: { danger: true },
+      cancelText: t("common.cancel"),
+      onOk: async () => {
+        setBulkBusy(true);
+        setError(null);
+        const results = await Promise.allSettled(ids.map((id) => deleteUser(id)));
+        const failures = results.filter((r) => r.status === "rejected").length;
+        if (failures > 0) {
+          setError(t("adminUsers.deleteManyResult", { success: ids.length - failures, total: ids.length, failures }));
+        }
+        setSelected(new Set());
+        await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        setBulkBusy(false);
+      },
+    });
   }
 
   return (
@@ -167,11 +187,11 @@ export default function AdminUsers() {
             Users {data && <span className="badge">{data.total} total</span>}
           </h1>
           <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-2)" }}>
-            只有系統角色為 admin 的使用者能看到這一頁。新帳號無法自行註冊，只能由 admin 建立。
+            {t("adminUsers.description")}
           </p>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-          新增使用者
+          {t("adminUsers.addUser")}
         </Button>
       </div>
 
@@ -336,7 +356,7 @@ export default function AdminUsers() {
                         )}
                       </td>
                       <td className="col-nowrap" style={{ color: "var(--fg-subtle)" }}>
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {formatDate(user.created_at)}
                       </td>
                     </tr>
                   </Fragment>
@@ -350,25 +370,25 @@ export default function AdminUsers() {
       {data && <Pagination total={data.total} limit={data.limit} offset={offset} onOffsetChange={setOffset} onLimitChange={setLimit} />}
 
       <Modal
-        title="新增使用者"
+        title={t("adminUsers.addUser")}
         open={createOpen}
         onCancel={() => setCreateOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={createMutation.isPending}
-        okText="建立"
-        cancelText="取消"
+        okText={t("common.create")}
+        cancelText={t("common.cancel")}
       >
         <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)} initialValues={{ role: "member" }}>
-          <Form.Item label="姓名" name="name" rules={[{ required: true }]}>
+          <Form.Item label={t("adminUsers.fullNameLabel")} name="name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
           <Form.Item label="Email" name="email" rules={[{ required: true, type: "email" }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="初始密碼" name="password" rules={[{ required: true, min: 8, message: "至少 8 個字元" }]}>
+          <Form.Item label={t("adminUsers.initialPasswordLabel")} name="password" rules={[{ required: true, min: 8, message: t("adminUsers.passwordMinLength") }]}>
             <Input.Password />
           </Form.Item>
-          <Form.Item label="系統角色" name="role" rules={[{ required: true }]}>
+          <Form.Item label={t("adminUsers.roleLabel")} name="role" rules={[{ required: true }]}>
             <Select
               options={[
                 { value: "member", label: "member" },

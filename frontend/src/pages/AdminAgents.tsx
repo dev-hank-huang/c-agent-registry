@@ -1,12 +1,14 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, Search, X } from "lucide-react";
 import { Fragment, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { listAdminAgents, transferOwner } from "../api/admin";
 import type { AgentSort } from "../api/types";
 import { listUsers } from "../api/users";
 import Pagination from "../components/Pagination";
 import VisibilityBadge from "../components/VisibilityBadge";
+import { useFormatters } from "../lib/relativeTime";
 
 const SORT_OPTIONS: { value: AgentSort; label: string }[] = [
   { value: "newest", label: "Newest" },
@@ -18,6 +20,8 @@ const SORT_OPTIONS: { value: AgentSort; label: string }[] = [
 // scoped) and My Agents (ownership-scoped). For the soft-deleted/permanent-deletion
 // queue, see Deleted Agents (not yet built).
 export default function AdminAgents() {
+  const { t } = useTranslation();
+  const { formatDate } = useFormatters();
   const queryClient = useQueryClient();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<AgentSort>("newest");
@@ -81,7 +85,7 @@ export default function AdminAgents() {
         Agents {data && <span className="badge">{data.total} total</span>}
       </h1>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-2)" }}>
-        每一個 agent，不分 public/private，跨所有 owner。
+        {t("adminAgents.description")}
       </p>
 
       <div className="filter-bar">
@@ -154,7 +158,7 @@ export default function AdminAgents() {
                         {agent.owner_name} ({agent.owner_email})
                       </td>
                       <td className="col-nowrap" style={{ color: "var(--fg-subtle)" }}>
-                        {new Date(agent.created_at).toLocaleDateString()}
+                        {formatDate(agent.created_at)}
                       </td>
                     </tr>
                     {isTransferring && (

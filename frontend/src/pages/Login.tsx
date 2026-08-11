@@ -1,6 +1,7 @@
 import { LockOutlined, MailOutlined, SafetyOutlined } from "@ant-design/icons";
 import { Alert, Button, Divider, Form, Input, Typography } from "antd";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ssoLoginUrl } from "../api/auth";
 import { useAuth } from "../auth/AuthContext";
@@ -11,6 +12,7 @@ interface LoginFormValues {
 }
 
 export default function Login() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function Login() {
       await login(values.email, values.password);
       navigate("/", { replace: true });
     } catch {
-      setError("帳號或密碼錯誤");
+      setError(t("login.error"));
     } finally {
       setSubmitting(false);
     }
@@ -72,15 +74,15 @@ export default function Login() {
           </div>
           <div>
             <div style={{ fontWeight: 650, fontSize: 16 }}>Agent Registry</div>
-            <div style={{ fontSize: 12, color: "#9AA0AC" }}>內部 agent 建立與審核平台</div>
+            <div style={{ fontSize: 12, color: "#9AA0AC" }}>{t("login.subtitle")}</div>
           </div>
         </div>
 
         <Typography.Title level={4} style={{ marginBottom: 4 }}>
-          登入
+          {t("login.loginButton")}
         </Typography.Title>
         <Typography.Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 24 }}>
-          使用你的帳號密碼，或透過公司 SSO 登入。
+          {t("login.credentialsHint")}
         </Typography.Paragraph>
 
         {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
@@ -89,24 +91,24 @@ export default function Login() {
           <Form.Item
             label="Email"
             name="email"
-            rules={[{ required: true, message: "請輸入 email" }]}
+            rules={[{ required: true, message: t("login.emailRequired") }]}
           >
             <Input prefix={<MailOutlined />} placeholder="you@company.com" size="large" />
           </Form.Item>
           <Form.Item
-            label="密碼"
+            label={t("login.passwordLabel")}
             name="password"
-            rules={[{ required: true, message: "請輸入密碼" }]}
+            rules={[{ required: true, message: t("login.passwordRequired") }]}
           >
             <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
           </Form.Item>
           <Button type="primary" htmlType="submit" block size="large" loading={submitting}>
-            登入
+            {t("login.loginButton")}
           </Button>
         </Form>
 
         <Divider plain style={{ fontSize: 12, color: "#9AA0AC" }}>
-          或
+          {t("login.or")}
         </Divider>
 
         <Button
@@ -117,7 +119,7 @@ export default function Login() {
             window.location.href = ssoLoginUrl();
           }}
         >
-          使用 SSO 登入
+          {t("login.ssoButton")}
         </Button>
       </div>
     </div>
