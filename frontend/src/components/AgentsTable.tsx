@@ -28,7 +28,7 @@ export default function AgentsTable({ agents, loading }: { agents: Agent[]; load
           render: (_: string, record: Agent) => (
             <div>
               <div style={{ fontWeight: 600 }}>{record.name}</div>
-              <div style={{ color: "#9AA0AC", fontSize: 12 }}>{record.slug}</div>
+              <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>{record.slug}</div>
             </div>
           ),
         },
@@ -45,14 +45,14 @@ export default function AgentsTable({ agents, loading }: { agents: Agent[]; load
         },
       ]}
       locale={{ emptyText: t("agentsTable.empty") }}
-      style={{ background: "#fff" }}
+      style={{ background: "var(--bg-surface)" }}
     />
   );
 }
 
 export function AvatarInitial({ name }: { name: string }) {
   return (
-    <Avatar size={22} style={{ background: "#EEF0FE", color: "#4338CA", fontSize: 10 }}>
+    <Avatar size={22} style={{ background: "var(--color-brand-tint)", color: "var(--fg-on-brand-tint)", fontSize: 10 }}>
       {name.slice(0, 1).toUpperCase()}
     </Avatar>
   );
