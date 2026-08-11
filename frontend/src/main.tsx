@@ -8,6 +8,8 @@ import { useTranslation } from "react-i18next";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import { AuthProvider } from "./auth/AuthContext";
+import { getAntdThemeConfig } from "./design-system/antdTheme";
+import { ThemeProvider, useTheme } from "./theme/ThemeContext";
 import "./i18n";
 import "./global.css";
 import "./design-system/tokens.css";
@@ -21,20 +23,14 @@ const queryClient = new QueryClient({
 // button text, …) in sync with the language picked via the LanguageSwitcher —
 // otherwise those fall back to antd's English defaults regardless of what the
 // rest of the app is showing.
-function Root() {
+function AppShell() {
   const { i18n } = useTranslation();
+  const { resolvedTheme } = useTheme();
 
   return (
     <ConfigProvider
       locale={i18n.language.startsWith("en") ? enUS : zhTW}
-      theme={{
-        token: {
-          colorPrimary: "#4338CA",
-          borderRadius: 6,
-          fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', Roboto, Helvetica, Arial, sans-serif",
-        },
-      }}
+      theme={getAntdThemeConfig(resolvedTheme)}
     >
       <AntApp>
         <QueryClientProvider client={queryClient}>
@@ -46,6 +42,14 @@ function Root() {
         </QueryClientProvider>
       </AntApp>
     </ConfigProvider>
+  );
+}
+
+function Root() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   );
 }
 
