@@ -133,7 +133,7 @@ export default function AgentDetail() {
         <div>
           <Typography.Title level={3} style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 10 }}>
             {agent.name}
-            <span style={{ fontFamily: "monospace", fontSize: 12.5, fontWeight: 500, color: "#9AA0AC" }}>
+            <span style={{ fontFamily: "monospace", fontSize: 12.5, fontWeight: 500, color: "var(--fg-subtle)" }}>
               {agent.slug}
             </span>
             <VisibilityTag visibility={agent.visibility} />
@@ -143,14 +143,14 @@ export default function AgentDetail() {
               {agent.description}
             </Typography.Paragraph>
           )}
-          <div style={{ display: "flex", gap: 20, fontSize: 12.5, color: "#9AA0AC" }}>
+          <div style={{ display: "flex", gap: 20, fontSize: 12.5, color: "var(--fg-subtle)" }}>
             {agent.provider && (
               <div>
-                {t("agentDetail.providerLabel")}<b style={{ color: "#6B7280" }}>{agent.provider}</b>
+                {t("agentDetail.providerLabel")}<b style={{ color: "var(--fg-muted)" }}>{agent.provider}</b>
               </div>
             )}
             <div>
-              {t("agentDetail.createdAtLabel")}<b style={{ color: "#6B7280" }}>{formatDate(agent.created_at)}</b>
+              {t("agentDetail.createdAtLabel")}<b style={{ color: "var(--fg-muted)" }}>{formatDate(agent.created_at)}</b>
             </div>
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function AgentDetail() {
         {t("agentDetail.membersTitle")}
       </Typography.Title>
       {membersQuery.data && membersQuery.data.length > 0 ? (
-        <div style={{ background: "#fff", border: "1px solid #E4E6EC", borderRadius: 8 }}>
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 8 }}>
           {membersQuery.data.map((m, idx) => (
             <div
               key={m.id}
@@ -223,14 +223,14 @@ export default function AgentDetail() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "13px 18px",
-                borderBottom: idx === membersQuery.data.length - 1 ? "none" : "1px solid #E4E6EC",
+                borderBottom: idx === membersQuery.data.length - 1 ? "none" : "1px solid var(--border-default)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Avatar size={22} style={{ background: "#EEF0FE", color: "#4338CA", fontSize: 10 }}>
+                <Avatar size={22} style={{ background: "var(--color-brand-tint)", color: "var(--fg-on-brand-tint)", fontSize: 10 }}>
                   {m.user_id.slice(0, 1).toUpperCase()}
                 </Avatar>
-                <span style={{ fontSize: 12.5, fontFamily: "monospace", color: "#6B7280" }}>{m.user_id}</span>
+                <span style={{ fontSize: 12.5, fontFamily: "monospace", color: "var(--fg-muted)" }}>{m.user_id}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <AssetRoleTag role={m.role} />
