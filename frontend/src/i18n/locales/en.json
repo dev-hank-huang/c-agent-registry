@@ -55,7 +55,11 @@
     "statistics": "Statistics",
     "language": "Language",
     "languageZh": "中文",
-    "languageEn": "English"
+    "languageEn": "English",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   },
   "relativeTime": {
     "justNow": "Just now",

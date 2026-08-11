@@ -55,7 +55,11 @@
     "statistics": "Statistics",
     "language": "語言",
     "languageZh": "中文",
-    "languageEn": "English"
+    "languageEn": "English",
+    "theme": "主題",
+    "themeLight": "淺色",
+    "themeDark": "深色",
+    "themeSystem": "跟隨系統"
   },
   "relativeTime": {
     "justNow": "剛剛",
