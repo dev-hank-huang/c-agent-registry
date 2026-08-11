@@ -200,7 +200,7 @@ export default function VersionDetail() {
             {version.slug}
             <VersionStatusTag status={version.status} />
           </Typography.Title>
-          <div style={{ fontSize: 12.5, color: "#9AA0AC" }}>
+          <div style={{ fontSize: 12.5, color: "var(--fg-subtle)" }}>
             {t("versionDetail.lastUpdated", { date: formatDateTime(version.updated_at) })}
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function VersionDetail() {
         }}
       >
         <div>
-          <div style={{ background: "#fff", border: "1px solid #E4E6EC", borderRadius: 8, padding: 20, marginBottom: 18 }}>
+          <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 8, padding: 20, marginBottom: 18 }}>
             <Typography.Title level={5} style={{ marginBottom: 14 }}>
               {t("versionDetail.paramsTitle")}
             </Typography.Title>
@@ -287,7 +287,7 @@ export default function VersionDetail() {
                 <Switch />
               </Form.Item>
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: "#9AA0AC", marginBottom: 6 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--fg-subtle)", marginBottom: 6 }}>
                   DEFAULT INPUT MODES
                 </div>
                 <Space wrap>
@@ -297,7 +297,7 @@ export default function VersionDetail() {
                 </Space>
               </div>
               <div style={{ marginBottom: isEditable ? 14 : 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: "#9AA0AC", marginBottom: 6 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--fg-subtle)", marginBottom: 6 }}>
                   DEFAULT OUTPUT MODES
                 </div>
                 <Space wrap>
@@ -314,7 +314,7 @@ export default function VersionDetail() {
             </Form>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid #E4E6EC", borderRadius: 8, padding: 20 }}>
+          <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 8, padding: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <Typography.Title level={5} style={{ marginBottom: 0 }}>
                 {t("versionDetail.dependenciesTitle")}
@@ -355,7 +355,7 @@ export default function VersionDetail() {
           </div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #E4E6EC", borderRadius: 8, padding: 20 }}>
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 8, padding: 20 }}>
           <Typography.Title level={5} style={{ marginBottom: 14 }}>
             {t("versionDetail.reviewHistoryTitle")}
           </Typography.Title>
@@ -364,7 +364,7 @@ export default function VersionDetail() {
               {reviewsQuery.data.map((r) => (
                 <div key={r.id}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontSize: 12.5, fontFamily: "monospace", color: "#6B7280" }}>
+                    <div style={{ fontSize: 12.5, fontFamily: "monospace", color: "var(--fg-muted)" }}>
                       {r.reviewer_id.slice(0, 8)}…
                     </div>
                     <ReviewResultTag result={r.result} />
