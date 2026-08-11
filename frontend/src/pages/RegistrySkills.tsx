@@ -100,15 +100,15 @@ export default function RegistrySkills() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 12,
-          background: "#F7F8FA",
-          border: "1px solid #E4E6EC",
+          background: "var(--bg-surface-2)",
+          border: "1px solid var(--border-default)",
           borderRadius: 8,
           padding: "10px 14px",
           marginBottom: 16,
           fontSize: 13,
         }}
       >
-        <span style={{ color: "#5B6270" }}>
+        <span style={{ color: "var(--fg-muted)" }}>
           {lastSyncedAt ? t("registry.lastSynced", { date: formatDateTime(lastSyncedAt) }) : t("common.notSyncedYet")}
           {" · "}
           {t("registry.availableCount", { available: availableCount, unavailable: unavailableCount })}
@@ -133,7 +133,7 @@ export default function RegistrySkills() {
             render: (_: string, r: Skill) => (
               <div>
                 <div style={{ fontWeight: 600 }}>{r.name}</div>
-                <div style={{ color: "#9AA0AC", fontSize: 12 }}>v{r.version}</div>
+                <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>v{r.version}</div>
               </div>
             ),
           },
