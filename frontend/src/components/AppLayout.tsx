@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import type { SupportedLanguage } from "../i18n";
+import { ThemeToggle } from "./ThemeToggle";
 
 function LanguageSwitcher() {
   const { t, i18n } = useTranslation();
@@ -50,8 +51,8 @@ function Brand() {
           width: 26,
           height: 26,
           borderRadius: 7,
-          background: "#4338CA",
-          color: "#fff",
+          background: "var(--color-brand)",
+          color: "var(--fg-on-brand)",
           fontWeight: 700,
           fontSize: 13,
           display: "flex",
@@ -176,7 +177,7 @@ export default function AppLayout() {
   return (
     <Layout style={{ minHeight: "100vh" }}>
       {!isMobile && (
-        <Sider width={224} theme="light" style={{ borderRight: "1px solid #E4E6EC" }}>
+        <Sider width={224} theme="light" style={{ borderRight: "1px solid var(--border-default)" }}>
           <Brand />
           {nav}
         </Sider>
@@ -197,8 +198,8 @@ export default function AppLayout() {
       <Layout style={{ minWidth: 0 }}>
         <Header
           style={{
-            background: "#fff",
-            borderBottom: "1px solid #E4E6EC",
+            background: "var(--bg-surface)",
+            borderBottom: "1px solid var(--border-default)",
             padding: "0 16px 0 24px",
             display: "flex",
             alignItems: "center",
@@ -217,6 +218,7 @@ export default function AppLayout() {
             <span />
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <ThemeToggle />
             <LanguageSwitcher />
             <Dropdown
               menu={{
@@ -234,7 +236,7 @@ export default function AppLayout() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }}>
-                <Avatar size={26} style={{ background: "#EEF0FE", color: "#4338CA" }}>
+                <Avatar size={26} style={{ background: "var(--color-brand-tint)", color: "var(--fg-on-brand-tint)" }}>
                   {initial}
                 </Avatar>
                 {!isMobile && (
@@ -248,7 +250,7 @@ export default function AppLayout() {
                     </Tag>
                   </div>
                 )}
-                <DownOutlined style={{ fontSize: 11, color: "#9AA0AC" }} />
+                <DownOutlined style={{ fontSize: 11, color: "var(--fg-subtle)" }} />
               </div>
             </Dropdown>
           </div>
