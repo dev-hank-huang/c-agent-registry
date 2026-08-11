@@ -87,7 +87,7 @@ export default function Skills() {
                       render: (_: string, r) => (
                         <div>
                           <div style={{ fontWeight: 600 }}>{r.name}</div>
-                          <div style={{ color: "#9AA0AC", fontSize: 12 }}>v{r.version}</div>
+                          <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>v{r.version}</div>
                         </div>
                       ),
                     },
@@ -122,7 +122,7 @@ export default function Skills() {
                       render: (_: string, r) => (
                         <div>
                           <div style={{ fontWeight: 600 }}>{r.name}</div>
-                          <div style={{ color: "#9AA0AC", fontSize: 12 }}>v{r.version}</div>
+                          <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>v{r.version}</div>
                         </div>
                       ),
                     },

@@ -151,7 +151,7 @@ export default function ReviewDetail() {
               </Descriptions.Item>
             </Descriptions>
 
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: "#9AA0AC", marginBottom: 8 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--fg-subtle)", marginBottom: 8 }}>
               {t("reviewDetail.dependenciesTitle")}
             </div>
             {depsQuery.data && depsQuery.data.length > 0 ? (
