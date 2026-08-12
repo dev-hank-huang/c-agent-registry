@@ -75,3 +75,8 @@ def mark_fab_synced(mcp_fab: MCPFab, status: AvailabilityStatus) -> None:
     """Set status + last_synced_at on the in-session object. Caller commits once for the batch."""
     mcp_fab.status = status
     mcp_fab.last_synced_at = datetime.now(timezone.utc)
+
+
+async def remove_mcp_fab(db: AsyncSession, mcp_fab: MCPFab) -> None:
+    await db.delete(mcp_fab)
+    await db.commit()

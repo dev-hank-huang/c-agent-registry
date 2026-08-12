@@ -18,8 +18,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { decideReview, getReview } from "../api/reviews";
-import { listMcps, listSkills } from "../api/skills";
-import { getVersion, listDependencies } from "../api/versions";
+import { listFabs, listMcps, listSkills } from "../api/skills";
+import { getVersion, listDependencies, listVersionFabs } from "../api/versions";
 import { ReviewResultTag, VersionStatusTag } from "../components/tags";
 
 export default function ReviewDetail() {
@@ -51,6 +51,12 @@ export default function ReviewDetail() {
   });
   const skillsQuery = useQuery({ queryKey: ["skills"], queryFn: listSkills });
   const mcpsQuery = useQuery({ queryKey: ["mcps"], queryFn: listMcps });
+  const versionFabsQuery = useQuery({
+    queryKey: ["version-fabs", versionSlug],
+    queryFn: () => listVersionFabs(versionSlug!),
+    enabled: !!versionSlug,
+  });
+  const fabsQuery = useQuery({ queryKey: ["fabs"], queryFn: listFabs });
 
   const skillNameById = useMemo(
     () => new Map((skillsQuery.data ?? []).map((s) => [s.id, `${s.name} v${s.version}`])),
@@ -59,6 +65,10 @@ export default function ReviewDetail() {
   const mcpNameById = useMemo(
     () => new Map((mcpsQuery.data ?? []).map((m) => [m.id, `${m.name} v${m.version}`])),
     [mcpsQuery.data],
+  );
+  const fabNameById = useMemo(
+    () => new Map((fabsQuery.data ?? []).map((f) => [f.id, f.fab])),
+    [fabsQuery.data],
   );
 
   const decisionMutation = useMutation({
@@ -123,8 +133,21 @@ export default function ReviewDetail() {
               <Descriptions.Item label={t("common.status")}>
                 <VersionStatusTag status={version.status} />
               </Descriptions.Item>
-              <Descriptions.Item label="Endpoint URL">
-                {version.url ?? <Typography.Text type="secondary">{t("common.none")}</Typography.Text>}
+              <Descriptions.Item label={t("reviewDetail.fabsLabel")}>
+                {versionFabsQuery.data && versionFabsQuery.data.length > 0 ? (
+                  <Space direction="vertical" size={2}>
+                    {versionFabsQuery.data.map((f) => (
+                      <span key={f.fab_id}>
+                        <Tag>{fabNameById.get(f.fab_id) ?? f.fab_id}</Tag>
+                        <span style={{ fontFamily: "monospace", fontSize: 12.5, color: "var(--fg-subtle)" }}>
+                          {f.url}
+                        </span>
+                      </span>
+                    ))}
+                  </Space>
+                ) : (
+                  <Typography.Text type="secondary">{t("common.none")}</Typography.Text>
+                )}
               </Descriptions.Item>
               <Descriptions.Item label={t("reviewDetail.streamingLabel")}>{version.streaming ? t("common.yes") : t("common.no")}</Descriptions.Item>
               <Descriptions.Item label="Input Modes">

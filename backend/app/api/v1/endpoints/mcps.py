@@ -103,6 +103,19 @@ async def list_mcp_fabs(
     return [MCPFabRead.model_validate(f) for f in fabs]
 
 
+@router.delete("/{mcp_id}/fabs/{fab_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_mcp_fab(
+    mcp_id: uuid.UUID,
+    fab_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    mcp_fab = await mcp_crud.get_mcp_fab(db, mcp_id, fab_id)
+    if mcp_fab is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    await mcp_crud.remove_mcp_fab(db, mcp_fab)
+
+
 @router.post("/sync", response_model=MCPSyncResult)
 async def sync_mcps(
     db: AsyncSession = Depends(get_db),

@@ -130,6 +130,82 @@ async def test_mcp_fab_assignment_rejects_duplicate_and_unknown_mcp(client, db_s
     assert resp.status_code == 404
 
 
+async def test_mcp_fab_remove(client, db_session):
+    user = await make_user(db_session, email="mc3@example.com", role=UserRole.member)
+    token = await login(client, "mc3@example.com")
+    mcp, fab, _ = await _seed_mcp_with_fab(db_session, user, host="https://a.example.com")
+
+    resp = await client.delete(f"/api/v1/mcps/{mcp.id}/fabs/{fab.id}", headers=auth_headers(token))
+    assert resp.status_code == 204
+
+    resp = await client.get(f"/api/v1/mcps/{mcp.id}/fabs", headers=auth_headers(token))
+    assert resp.json() == []
+
+    resp = await client.delete(f"/api/v1/mcps/{mcp.id}/fabs/{fab.id}", headers=auth_headers(token))
+    assert resp.status_code == 404
+
+
+async def test_skill_fab_assign_list_and_reject_duplicate(client, db_session):
+    user = await make_user(db_session, email="sf1@example.com", role=UserRole.member)
+    token = await login(client, "sf1@example.com")
+    skill = await _seed_skill(db_session, user, "fab-skill")
+    fab = await fab_crud.create_fab(db_session, fab="F41")
+
+    resp = await client.post(
+        f"/api/v1/skills/{skill.id}/fabs",
+        headers=auth_headers(token),
+        json={"fab_id": str(fab.id)},
+    )
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["skill_id"] == str(skill.id)
+    assert body["fab_id"] == str(fab.id)
+    assert body["created_at"]
+
+    resp = await client.get(f"/api/v1/skills/{skill.id}/fabs", headers=auth_headers(token))
+    assert resp.status_code == 200
+    assert [f["fab_id"] for f in resp.json()] == [str(fab.id)]
+
+    # GET /skills reflects the assignment too.
+    resp = await client.get("/api/v1/skills", headers=auth_headers(token))
+    listed = next(s for s in resp.json() if s["id"] == str(skill.id))
+    assert [f["fab_id"] for f in listed["fabs"]] == [str(fab.id)]
+
+    # duplicate assignment rejected
+    resp = await client.post(
+        f"/api/v1/skills/{skill.id}/fabs",
+        headers=auth_headers(token),
+        json={"fab_id": str(fab.id)},
+    )
+    assert resp.status_code == 409
+
+    # unknown skill
+    resp = await client.post(
+        f"/api/v1/skills/{uuid.uuid4()}/fabs",
+        headers=auth_headers(token),
+        json={"fab_id": str(fab.id)},
+    )
+    assert resp.status_code == 404
+
+
+async def test_skill_fab_remove(client, db_session):
+    user = await make_user(db_session, email="sf2@example.com", role=UserRole.member)
+    token = await login(client, "sf2@example.com")
+    skill = await _seed_skill(db_session, user, "fab-skill-2")
+    fab = await fab_crud.create_fab(db_session, fab="F42")
+    await client.post(
+        f"/api/v1/skills/{skill.id}/fabs", headers=auth_headers(token), json={"fab_id": str(fab.id)}
+    )
+
+    resp = await client.delete(
+        f"/api/v1/skills/{skill.id}/fabs/{fab.id}", headers=auth_headers(token)
+    )
+    assert resp.status_code == 204
+
+    resp = await client.get(f"/api/v1/skills/{skill.id}/fabs", headers=auth_headers(token))
+    assert resp.json() == []
+
+
 async def test_ai_model_create_list_sync(client, db_session):
     await make_user(db_session, email="ai1@example.com", role=UserRole.member)
     token = await login(client, "ai1@example.com")

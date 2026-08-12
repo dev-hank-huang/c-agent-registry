@@ -1,9 +1,10 @@
-import { SyncOutlined } from "@ant-design/icons";
+import { CloseOutlined, SettingOutlined, SyncOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Empty, Switch, Table, Tag, Typography, App } from "antd";
+import { Button, Empty, Form, Modal, Select, Switch, Table, Tag, Typography, App, Input } from "antd";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { listMcps, syncMcps } from "../api/skills";
+import { assignMcpFab, listFabs, listMcps, removeMcpFab, syncMcps } from "../api/skills";
+import type { AssignMcpFabInput } from "../api/skills";
 import type { Mcp, McpFab } from "../api/types";
 import { useFormatters } from "../lib/relativeTime";
 
@@ -23,8 +24,11 @@ export default function RegistryMcps() {
   const queryClient = useQueryClient();
   const [showUnavailable, setShowUnavailable] = useState(false);
   const [changedKeys, setChangedKeys] = useState<ChangedKeys>(new Set());
+  const [manageTarget, setManageTarget] = useState<Mcp | null>(null);
+  const [assignForm] = Form.useForm<AssignMcpFabInput>();
 
   const { data: mcps = [], isLoading } = useQuery({ queryKey: ["mcps"], queryFn: listMcps });
+  const { data: fabs = [] } = useQuery({ queryKey: ["fabs"], queryFn: listFabs });
 
   const syncMutation = useMutation({
     mutationFn: syncMcps,
@@ -42,6 +46,25 @@ export default function RegistryMcps() {
     onError: () => message.error(t("common.syncFailed")),
   });
 
+  const assignMutation = useMutation({
+    mutationFn: (input: AssignMcpFabInput) => assignMcpFab(manageTarget!.id, input),
+    onSuccess: () => {
+      message.success(t("registry.fabAssignSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["mcps"] });
+      assignForm.resetFields();
+    },
+    onError: () => message.error(t("registry.fabAssignFailed")),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (fabId: string) => removeMcpFab(manageTarget!.id, fabId),
+    onSuccess: () => {
+      message.success(t("registry.fabRemoveSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["mcps"] });
+    },
+    onError: () => message.error(t("common.removeFailed")),
+  });
+
   const allFabs = useMemo(() => mcps.flatMap((m) => m.fabs), [mcps]);
   const lastSyncedAt = useMemo(() => {
     const timestamps = allFabs.map((f) => f.last_synced_at).filter((v): v is string => !!v);
@@ -57,6 +80,14 @@ export default function RegistryMcps() {
   const visibleMcps = showUnavailable
     ? mcps
     : mcps.filter((m) => m.fabs.length === 0 || m.fabs.some((f) => f.status === "available"));
+
+  // Re-derive the manage-modal's target from the live query data (rather than the
+  // stale snapshot captured when the modal opened) so assign/remove immediately
+  // reflect in the "already assigned" list without closing the modal.
+  const liveManageTarget = manageTarget ? mcps.find((m) => m.id === manageTarget.id) ?? null : null;
+  const unassignedFabs = liveManageTarget
+    ? fabs.filter((f) => !liveManageTarget.fabs.some((mf) => mf.fab_id === f.id))
+    : [];
 
   return (
     <div>
@@ -122,8 +153,8 @@ export default function RegistryMcps() {
           defaultExpandAllRows: true,
           rowExpandable: (r: Mcp) => r.fabs.length > 0,
           expandedRowRender: (r: Mcp) => {
-            const fabs = showUnavailable ? r.fabs : r.fabs.filter((f) => f.status === "available");
-            if (fabs.length === 0) {
+            const shownFabs = showUnavailable ? r.fabs : r.fabs.filter((f) => f.status === "available");
+            if (shownFabs.length === 0) {
               return <Empty description={t("registry.noFabs")} image={Empty.PRESENTED_IMAGE_SIMPLE} />;
             }
             return (
@@ -131,7 +162,7 @@ export default function RegistryMcps() {
                 rowKey="fab_id"
                 size="small"
                 pagination={false}
-                dataSource={fabs}
+                dataSource={shownFabs}
                 rowClassName={(f) => (changedKeys.has(fabKey(r.id, f.fab_id)) ? "row-recently-changed" : "")}
                 columns={[
                   { title: t("registry.fabsColumn"), dataIndex: "fab_id" },
@@ -181,10 +212,76 @@ export default function RegistryMcps() {
           {
             title: t("registry.fabCount"),
             dataIndex: "fabs",
-            render: (fabs: McpFab[]) => `${fabs.filter((f) => f.status === "available").length} / ${fabs.length}`,
+            render: (fabsCol: McpFab[]) => `${fabsCol.filter((f) => f.status === "available").length} / ${fabsCol.length}`,
+          },
+          {
+            title: "",
+            key: "actions",
+            render: (_: unknown, r: Mcp) => (
+              <Button size="small" icon={<SettingOutlined />} onClick={() => setManageTarget(r)}>
+                {t("registry.manageFabs")}
+              </Button>
+            ),
           },
         ]}
       />
+
+      <Modal
+        title={liveManageTarget ? t("registry.manageFabsTitle", { name: liveManageTarget.name }) : ""}
+        open={!!manageTarget}
+        onCancel={() => setManageTarget(null)}
+        footer={null}
+      >
+        {liveManageTarget && (
+          <>
+            {liveManageTarget.fabs.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                {liveManageTarget.fabs.map((f) => (
+                  <div
+                    key={f.fab_id}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "6px 0" }}
+                  >
+                    <span style={{ fontSize: 13 }}>
+                      <Tag>{fabs.find((fab) => fab.id === f.fab_id)?.fab ?? f.fab_id}</Tag>
+                      <span style={{ fontFamily: "monospace", fontSize: 12, color: "var(--fg-subtle)" }}>{f.host}</span>
+                    </span>
+                    <Button
+                      size="small"
+                      type="text"
+                      danger
+                      icon={<CloseOutlined />}
+                      loading={removeMutation.isPending}
+                      onClick={() => removeMutation.mutate(f.fab_id)}
+                      aria-label={t("common.remove")}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <Form
+              form={assignForm}
+              layout="vertical"
+              onFinish={(v) => assignMutation.mutate(v)}
+              disabled={unassignedFabs.length === 0}
+            >
+              <Form.Item label={t("registry.fabLabel")} name="fab_id" rules={[{ required: true }]}>
+                <Select
+                  placeholder={
+                    unassignedFabs.length === 0 ? t("registry.allFabsAssigned") : t("common.select")
+                  }
+                  options={unassignedFabs.map((f) => ({ value: f.id, label: f.fab }))}
+                />
+              </Form.Item>
+              <Form.Item label={t("registry.hostColumn")} name="host" rules={[{ required: true }]}>
+                <Input placeholder="https://finance.internal:8443" />
+              </Form.Item>
+              <Button htmlType="submit" type="primary" loading={assignMutation.isPending}>
+                {t("registry.assignFab")}
+              </Button>
+            </Form>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

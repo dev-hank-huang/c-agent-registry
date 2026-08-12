@@ -100,7 +100,14 @@
     "slugRequired": "Please enter a slug",
     "slugPattern": "Lowercase letters, numbers, and hyphens only",
     "slugExtra": "A unique identifier, e.g. invoice-extractor",
-    "descriptionPlaceholder": "What does this agent do?"
+    "descriptionPlaceholder": "What does this agent do?",
+    "iconLabel": "Icon URL",
+    "iconExtra": "A URL to an icon image. Uploading a file directly isn't supported yet.",
+    "helloMsgLabel": "Hello Message",
+    "helloMsgPlaceholder": "Hi, I can plan routes and analyze traffic.",
+    "exampleQuestionsLabel": "Example Questions",
+    "exampleQuestionPlaceholder": "Plan a route from A to B avoiding tolls",
+    "addExampleQuestion": "Add example question"
   },
   "agentDetail": {
     "inviteSuccess": "Invited as editor",
@@ -127,11 +134,7 @@
     "inviteModalTitle": "Invite Member",
     "inviteOk": "Invite",
     "userIdRequired": "Please enter a user id",
-    "inviteExtra": "The invitee will get editor access. Ask an admin to look up a user id on the Users page.",
-    "addVersionModalTitle": "New Version",
-    "createDraft": "Create Draft",
-    "addVersionDesc": "This creates a draft version. Afterwards you can freely edit its URL, streaming, dependencies, and other parameters on the version detail page —\nnothing goes to review until you submit it yourself.",
-    "endpointUrlExtra": "You can continue editing other parameters on the version detail page"
+    "inviteExtra": "The invitee will get editor access. Ask an admin to look up a user id on the Users page."
   },
   "versionDetail": {
     "submitSuccess": "Submitted for review",
@@ -173,7 +176,27 @@
     "addDependencyModalTitle": "Add Dependency",
     "addOk": "Add",
     "skillsUploaded": "Skills (uploaded)",
-    "skillHubSynced": "SkillHub Registry (synced)"
+    "skillHubSynced": "SkillHub Registry (synced)",
+    "fabsTitle": "Deploy to Fabs",
+    "fabsDesc": "Which fabs this version is deployed to, and its service URL in each — becomes the agent card's supportedInterfaces.",
+    "fabsEmpty": "No fabs exist yet — an admin can add them under Governance → Fabs.",
+    "fabsSave": "Save Fabs",
+    "fabsSaveSuccess": "Fab deployments saved",
+    "fabsSaveFailed": "Save failed",
+    "noFabsSelectedHint": "No fabs saved for this version yet — save a fab deployment above first, then dependencies deployed there become selectable.",
+    "skillsEditorTitle": "Agent Card Skills",
+    "skillsEditorDesc": "Freely-authored capability entries for the agent card's own \"skills\" array — distinct from the Skill/MCP dependencies below, which reference catalog items instead.",
+    "skillTagsLabel": "Tags",
+    "skillExamplesLabel": "Examples",
+    "examplesPlaceholder": "One example per line",
+    "skillInputModesLabel": "Input Modes",
+    "skillOutputModesLabel": "Output Modes",
+    "addSkillCard": "Add Skill Card",
+    "skillsSave": "Save Skills",
+    "skillsSaveSuccess": "Agent card skills saved",
+    "skillsSaveFailed": "Save failed",
+    "agentCardTitle": "Agent Card (A2A 1.0)",
+    "agentCardDesc": "Assembled live from this agent, version, and its fab deployments — not stored, just a projection."
   },
   "reviewDetail": {
     "submitResultSuccess": "Review result submitted",
@@ -182,6 +205,7 @@
     "breadcrumb": "My Reviews",
     "title": "Review: {{slug}}",
     "versionContentTitle": "Version Content",
+    "fabsLabel": "Deployed Fabs",
     "streamingLabel": "Streaming",
     "dependenciesTitle": "SKILL / MCP Dependencies",
     "dependenciesEmpty": "No dependencies added yet",
@@ -230,7 +254,14 @@
     "noFabs": "Not deployed to any fab yet",
     "fabLabel": "Fab",
     "addFab": "New Fab",
-    "fabNamePlaceholder": "F15"
+    "fabNamePlaceholder": "F15",
+    "manageFabs": "Manage Fabs",
+    "manageFabsTitle": "Fabs — {{name}}",
+    "fabAssignSuccess": "Deployed to fab",
+    "fabAssignFailed": "Assign failed",
+    "fabRemoveSuccess": "Removed from fab",
+    "allFabsAssigned": "Already deployed to every fab",
+    "assignFab": "Deploy"
   },
   "adminUsers": {
     "createSuccess": "User created",

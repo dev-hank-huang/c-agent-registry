@@ -261,10 +261,10 @@ async def test_rejected_version_can_be_edited_and_resubmitted_in_place(client, d
     resp = await client.patch(
         f"/api/v1/versions/{version_slug}",
         headers=auth_headers(member_token),
-        json={"url": "https://fixed.example.com"},
+        json={"default_input_modes": ["application/json"]},
     )
     assert resp.status_code == 200, resp.text
-    assert resp.json()["url"] == "https://fixed.example.com"
+    assert resp.json()["default_input_modes"] == ["application/json"]
 
     # ...and resubmittable from rejected, without a new version slug.
     resp = await client.post(

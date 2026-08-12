@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { Fab, Mcp, McpFab, McpSyncItem, Skill, SkillSyncItem, SyncResult } from "./types";
+import type { Fab, Mcp, McpFab, McpSyncItem, Skill, SkillFab, SkillSyncItem, SyncResult } from "./types";
 
 export async function listSkills(): Promise<Skill[]> {
   const { data } = await apiClient.get<Skill[]>("/skills");
@@ -29,6 +29,19 @@ export interface AssignMcpFabInput {
 export async function assignMcpFab(mcpId: string, input: AssignMcpFabInput): Promise<McpFab> {
   const { data } = await apiClient.post<McpFab>(`/mcps/${mcpId}/fabs`, input);
   return data;
+}
+
+export async function removeMcpFab(mcpId: string, fabId: string): Promise<void> {
+  await apiClient.delete(`/mcps/${mcpId}/fabs/${fabId}`);
+}
+
+export async function assignSkillFab(skillId: string, fabId: string): Promise<SkillFab> {
+  const { data } = await apiClient.post<SkillFab>(`/skills/${skillId}/fabs`, { fab_id: fabId });
+  return data;
+}
+
+export async function removeSkillFab(skillId: string, fabId: string): Promise<void> {
+  await apiClient.delete(`/skills/${skillId}/fabs/${fabId}`);
 }
 
 export async function listFabs(): Promise<Fab[]> {

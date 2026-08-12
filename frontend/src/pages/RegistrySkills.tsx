@@ -1,9 +1,9 @@
-import { SyncOutlined } from "@ant-design/icons";
+import { CloseOutlined, SettingOutlined, SyncOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Switch, Table, Tag, Typography } from "antd";
+import { App, Button, Form, Modal, Select, Switch, Table, Tag, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { listSkills, syncSkills } from "../api/skills";
+import { assignSkillFab, listFabs, listSkills, removeSkillFab, syncSkills } from "../api/skills";
 import type { Skill } from "../api/types";
 import { useFormatters } from "../lib/relativeTime";
 
@@ -16,8 +16,11 @@ export default function RegistrySkills() {
   // Skill ids whose `status` flipped in the most recent sync run — cleared on the
   // next fetch/sync so a stale highlight never lingers, same as RegistryMcps.
   const [changedIds, setChangedIds] = useState<Set<string>>(new Set());
+  const [manageTarget, setManageTarget] = useState<Skill | null>(null);
+  const [assignForm] = Form.useForm<{ fab_id: string }>();
 
   const { data: skills = [], isLoading } = useQuery({ queryKey: ["skills"], queryFn: listSkills });
+  const { data: fabs = [] } = useQuery({ queryKey: ["fabs"], queryFn: listFabs });
 
   const syncMutation = useMutation({
     mutationFn: syncSkills,
@@ -29,6 +32,25 @@ export default function RegistrySkills() {
     onError: () => message.error(t("common.syncFailed")),
   });
 
+  const assignMutation = useMutation({
+    mutationFn: (fabId: string) => assignSkillFab(manageTarget!.id, fabId),
+    onSuccess: () => {
+      message.success(t("registry.fabAssignSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      assignForm.resetFields();
+    },
+    onError: () => message.error(t("registry.fabAssignFailed")),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (fabId: string) => removeSkillFab(manageTarget!.id, fabId),
+    onSuccess: () => {
+      message.success(t("registry.fabRemoveSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+    },
+    onError: () => message.error(t("common.removeFailed")),
+  });
+
   const lastSyncedAt = useMemo(() => {
     const timestamps = skills.map((s) => s.last_synced_at).filter((v): v is string => !!v);
     if (timestamps.length === 0) return null;
@@ -38,6 +60,11 @@ export default function RegistrySkills() {
   const availableCount = skills.filter((s) => s.status === "available").length;
   const unavailableCount = skills.length - availableCount;
   const visibleSkills = showUnavailable ? skills : skills.filter((s) => s.status === "available");
+
+  const liveManageTarget = manageTarget ? skills.find((s) => s.id === manageTarget.id) ?? null : null;
+  const unassignedFabs = liveManageTarget
+    ? fabs.filter((f) => !liveManageTarget.fabs.some((sf) => sf.fab_id === f.id))
+    : [];
 
   return (
     <div>
@@ -127,12 +154,77 @@ export default function RegistrySkills() {
             ),
           },
           {
+            title: t("registry.fabsColumn"),
+            dataIndex: "fabs",
+            render: (fabsCol: Skill["fabs"]) => fabsCol.length,
+          },
+          {
             title: t("common.updatedAt"),
             dataIndex: "updated_at",
             render: (v: string) => formatDateTime(v),
           },
+          {
+            title: "",
+            key: "actions",
+            render: (_: unknown, r: Skill) => (
+              <Button size="small" icon={<SettingOutlined />} onClick={() => setManageTarget(r)}>
+                {t("registry.manageFabs")}
+              </Button>
+            ),
+          },
         ]}
       />
+
+      <Modal
+        title={liveManageTarget ? t("registry.manageFabsTitle", { name: liveManageTarget.name }) : ""}
+        open={!!manageTarget}
+        onCancel={() => setManageTarget(null)}
+        footer={null}
+      >
+        {liveManageTarget && (
+          <>
+            {liveManageTarget.fabs.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                {liveManageTarget.fabs.map((f) => (
+                  <div
+                    key={f.fab_id}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "6px 0" }}
+                  >
+                    <Tag>{fabs.find((fab) => fab.id === f.fab_id)?.fab ?? f.fab_id}</Tag>
+                    <Button
+                      size="small"
+                      type="text"
+                      danger
+                      icon={<CloseOutlined />}
+                      loading={removeMutation.isPending}
+                      onClick={() => removeMutation.mutate(f.fab_id)}
+                      aria-label={t("common.remove")}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <Form
+              form={assignForm}
+              layout="vertical"
+              onFinish={(v) => assignMutation.mutate(v.fab_id)}
+              disabled={unassignedFabs.length === 0}
+            >
+              <Form.Item label={t("registry.fabLabel")} name="fab_id" rules={[{ required: true }]}>
+                <Select
+                  placeholder={
+                    unassignedFabs.length === 0 ? t("registry.allFabsAssigned") : t("common.select")
+                  }
+                  options={unassignedFabs.map((f) => ({ value: f.id, label: f.fab }))}
+                />
+              </Form.Item>
+              <Button htmlType="submit" type="primary" loading={assignMutation.isPending}>
+                {t("registry.assignFab")}
+              </Button>
+            </Form>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

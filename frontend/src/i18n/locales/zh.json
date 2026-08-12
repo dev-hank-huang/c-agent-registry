@@ -100,7 +100,14 @@
     "slugRequired": "請輸入 slug",
     "slugPattern": "只能用小寫英文、數字、連字號",
     "slugExtra": "唯一識別碼，例如 invoice-extractor",
-    "descriptionPlaceholder": "這個 agent 是做什麼的"
+    "descriptionPlaceholder": "這個 agent 是做什麼的",
+    "iconLabel": "Icon URL",
+    "iconExtra": "圖片的 URL，還不支援直接上傳檔案。",
+    "helloMsgLabel": "Hello Message",
+    "helloMsgPlaceholder": "嗨，我可以幫你規劃路線、分析交通狀況。",
+    "exampleQuestionsLabel": "Example Questions",
+    "exampleQuestionPlaceholder": "規劃從 A 到 B 且避開收費站的路線",
+    "addExampleQuestion": "新增範例問題"
   },
   "agentDetail": {
     "inviteSuccess": "已邀請為 editor",
@@ -127,11 +134,7 @@
     "inviteModalTitle": "邀請成員",
     "inviteOk": "邀請",
     "userIdRequired": "請輸入 user id",
-    "inviteExtra": "邀請後對方會取得 editor 權限。可請 admin 在使用者管理頁查詢 user id。",
-    "addVersionModalTitle": "新增版本",
-    "createDraft": "建立草稿",
-    "addVersionDesc": "這會建立一個草稿版本，之後可以在版本詳情頁自由編輯 URL、streaming、依賴等參數，\n直到你自己按下「送審」才會正式送出去審核。",
-    "endpointUrlExtra": "之後可以在版本詳情頁繼續編輯其他參數"
+    "inviteExtra": "邀請後對方會取得 editor 權限。可請 admin 在使用者管理頁查詢 user id。"
   },
   "versionDetail": {
     "submitSuccess": "已送審",
@@ -173,7 +176,27 @@
     "addDependencyModalTitle": "新增依賴",
     "addOk": "加入",
     "skillsUploaded": "Skills（已上傳）",
-    "skillHubSynced": "SkillHub Registry（已同步）"
+    "skillHubSynced": "SkillHub Registry（已同步）",
+    "fabsTitle": "部署廠區",
+    "fabsDesc": "這個版本要部署到哪些廠區、各自的服務 URL 是什麼——會組成 agent card 的 supportedInterfaces。",
+    "fabsEmpty": "目前還沒有任何廠區，請 admin 到 Governance → Fabs 新增。",
+    "fabsSave": "儲存部署廠區",
+    "fabsSaveSuccess": "已儲存部署廠區",
+    "fabsSaveFailed": "儲存失敗",
+    "noFabsSelectedHint": "這個版本還沒儲存任何部署廠區——先在上方存一筆部署，該廠區有的依賴才會出現在這裡可選。",
+    "skillsEditorTitle": "Agent Card Skills",
+    "skillsEditorDesc": "自由填寫的能力描述，會組進 agent card 自己的「skills」陣列——跟下面引用 catalog 項目的 Skill / MCP 依賴是不同的東西。",
+    "skillTagsLabel": "Tags",
+    "skillExamplesLabel": "Examples",
+    "examplesPlaceholder": "一行一個範例",
+    "skillInputModesLabel": "Input Modes",
+    "skillOutputModesLabel": "Output Modes",
+    "addSkillCard": "新增 Skill 卡片",
+    "skillsSave": "儲存 Skills",
+    "skillsSaveSuccess": "已儲存 agent card skills",
+    "skillsSaveFailed": "儲存失敗",
+    "agentCardTitle": "Agent Card（A2A 1.0）",
+    "agentCardDesc": "即時從這個 agent、version、部署廠區組出來——不會被儲存，只是一份即時投影。"
   },
   "reviewDetail": {
     "submitResultSuccess": "已送出審核結果",
@@ -182,6 +205,7 @@
     "breadcrumb": "待我審核",
     "title": "審核：{{slug}}",
     "versionContentTitle": "版本內容",
+    "fabsLabel": "部署廠區",
     "streamingLabel": "Streaming",
     "dependenciesTitle": "依賴的 SKILL / MCP",
     "dependenciesEmpty": "尚未加入任何依賴",
@@ -230,7 +254,14 @@
     "noFabs": "尚未部署到任何廠區",
     "fabLabel": "廠區",
     "addFab": "新增廠區",
-    "fabNamePlaceholder": "F15"
+    "fabNamePlaceholder": "F15",
+    "manageFabs": "管理廠區",
+    "manageFabsTitle": "廠區 — {{name}}",
+    "fabAssignSuccess": "已部署到該廠區",
+    "fabAssignFailed": "指派失敗",
+    "fabRemoveSuccess": "已從該廠區移除",
+    "allFabsAssigned": "已部署到所有廠區",
+    "assignFab": "部署"
   },
   "adminUsers": {
     "createSuccess": "使用者已建立",
