@@ -84,8 +84,10 @@ export default function AppLayout() {
     if (path.startsWith("/admin/review-summary")) return "review-summary";
     if (path.startsWith("/reviews")) return "my-reviews";
     if (path.startsWith("/skills")) return "skills";
+    if (path.startsWith("/registry/skills")) return "registry-skills";
     if (path.startsWith("/registry/mcps")) return "registry-mcps";
     if (path.startsWith("/registry/models")) return "registry-models";
+    if (path.startsWith("/admin/fabs")) return "admin-fabs";
     if (path.startsWith("/admin/users")) return "admin-users";
     if (path.startsWith("/admin/agent-summary")) return "admin-agent-summary";
     if (path.startsWith("/admin/agents")) return "admin-agents";
@@ -149,9 +151,11 @@ export default function AppLayout() {
             label: t("nav.registry"),
             children: [
               { key: "admin-agent-templates", label: t("nav.agentTemplates"), onClick: () => go("/admin/agent-templates") },
+              { key: "registry-skills", label: t("nav.skill"), onClick: () => go("/registry/skills") },
               { key: "registry-mcps", label: t("nav.mcp"), onClick: () => go("/registry/mcps") },
               { key: "registry-models", label: t("nav.model"), onClick: () => go("/registry/models") },
               { key: "admin-skillhub-registry", label: t("nav.skillhubRegistry"), onClick: () => go("/admin/skillhub-registry") },
+              { key: "admin-fabs", label: t("nav.fabs"), onClick: () => go("/admin/fabs") },
             ],
           },
           {

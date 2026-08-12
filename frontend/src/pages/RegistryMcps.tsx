@@ -1,53 +1,62 @@
-import { PlusOutlined, SyncOutlined } from "@ant-design/icons";
+import { SyncOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Form, Input, Modal, Switch, Table, Tag, Typography } from "antd";
+import { Button, Empty, Switch, Table, Tag, Typography, App } from "antd";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { createMcp, listMcps, syncMcps } from "../api/skills";
-import type { CreateMcpInput } from "../api/skills";
-import type { Mcp } from "../api/types";
+import { listMcps, syncMcps } from "../api/skills";
+import type { Mcp, McpFab } from "../api/types";
 import { useFormatters } from "../lib/relativeTime";
+
+// Keyed by `${mcp_id}:${fab_id}` — set right after a sync completes, so the table can
+// highlight exactly the fab rows that sync just flipped, and cleared on the next
+// fetch/sync so a stale highlight never lingers.
+type ChangedKeys = Set<string>;
+
+function fabKey(mcpId: string, fabId: string): string {
+  return `${mcpId}:${fabId}`;
+}
 
 export default function RegistryMcps() {
   const { t } = useTranslation();
   const { formatDateTime } = useFormatters();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
-  const [createOpen, setCreateOpen] = useState(false);
   const [showUnavailable, setShowUnavailable] = useState(false);
-  const [form] = Form.useForm<CreateMcpInput>();
+  const [changedKeys, setChangedKeys] = useState<ChangedKeys>(new Set());
 
   const { data: mcps = [], isLoading } = useQuery({ queryKey: ["mcps"], queryFn: listMcps });
-
-  const createMutation = useMutation({
-    mutationFn: createMcp,
-    onSuccess: () => {
-      message.success(t("registry.createSuccess", { item: "MCP" }));
-      queryClient.invalidateQueries({ queryKey: ["mcps"] });
-      setCreateOpen(false);
-      form.resetFields();
-    },
-    onError: () => message.error(t("common.createFailed")),
-  });
 
   const syncMutation = useMutation({
     mutationFn: syncMcps,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["mcps"] });
       message.success(t("registry.syncComplete", { available: result.available, unavailable: result.unavailable }));
+      const next: ChangedKeys = new Set();
+      for (const item of result.items) {
+        for (const fab of item.fabs) {
+          if (fab.changed) next.add(fabKey(item.id, fab.fab_id));
+        }
+      }
+      setChangedKeys(next);
     },
     onError: () => message.error(t("common.syncFailed")),
   });
 
+  const allFabs = useMemo(() => mcps.flatMap((m) => m.fabs), [mcps]);
   const lastSyncedAt = useMemo(() => {
-    const timestamps = mcps.map((m) => m.last_synced_at).filter((v): v is string => !!v);
+    const timestamps = allFabs.map((f) => f.last_synced_at).filter((v): v is string => !!v);
     if (timestamps.length === 0) return null;
     return timestamps.reduce((a, b) => (a > b ? a : b));
-  }, [mcps]);
+  }, [allFabs]);
 
-  const availableCount = mcps.filter((m) => m.status === "available").length;
-  const unavailableCount = mcps.length - availableCount;
-  const visibleMcps = showUnavailable ? mcps : mcps.filter((m) => m.status === "available");
+  const availableCount = allFabs.filter((f) => f.status === "available").length;
+  const unavailableCount = allFabs.length - availableCount;
+  // An MCP is visible if it has at least one fab matching the current filter (an MCP
+  // with zero fabs at all is always shown — "show unavailable" only hides ones that
+  // are entirely unavailable, not ones that were never deployed anywhere).
+  const visibleMcps = showUnavailable
+    ? mcps
+    : mcps.filter((m) => m.fabs.length === 0 || m.fabs.some((f) => f.status === "available"));
 
   return (
     <div>
@@ -67,18 +76,13 @@ export default function RegistryMcps() {
           </Typography.Title>
           <Typography.Text type="secondary">{t("registry.mcpDescription")}</Typography.Text>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button
-            icon={<SyncOutlined spin={syncMutation.isPending} />}
-            loading={syncMutation.isPending}
-            onClick={() => syncMutation.mutate()}
-          >
-            {t("registry.sync")}
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-            {t("registry.addMcp")}
-          </Button>
-        </div>
+        <Button
+          icon={<SyncOutlined spin={syncMutation.isPending} />}
+          loading={syncMutation.isPending}
+          onClick={() => syncMutation.mutate()}
+        >
+          {t("registry.sync")}
+        </Button>
       </div>
 
       <div
@@ -114,6 +118,54 @@ export default function RegistryMcps() {
         loading={isLoading}
         dataSource={visibleMcps}
         pagination={false}
+        expandable={{
+          defaultExpandAllRows: true,
+          rowExpandable: (r: Mcp) => r.fabs.length > 0,
+          expandedRowRender: (r: Mcp) => {
+            const fabs = showUnavailable ? r.fabs : r.fabs.filter((f) => f.status === "available");
+            if (fabs.length === 0) {
+              return <Empty description={t("registry.noFabs")} image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+            }
+            return (
+              <Table<McpFab>
+                rowKey="fab_id"
+                size="small"
+                pagination={false}
+                dataSource={fabs}
+                rowClassName={(f) => (changedKeys.has(fabKey(r.id, f.fab_id)) ? "row-recently-changed" : "")}
+                columns={[
+                  { title: t("registry.fabsColumn"), dataIndex: "fab_id" },
+                  {
+                    title: t("registry.hostColumn"),
+                    dataIndex: "host",
+                    render: (v: string) => <span style={{ fontFamily: "monospace", fontSize: 12.5 }}>{v}</span>,
+                  },
+                  {
+                    title: t("common.status"),
+                    dataIndex: "status",
+                    render: (s: McpFab["status"], row: McpFab) => (
+                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {s === "available" ? (
+                          <Tag color="green">{t("registry.available")}</Tag>
+                        ) : (
+                          <Tag color="red">{t("registry.unavailable")}</Tag>
+                        )}
+                        {changedKeys.has(fabKey(r.id, row.fab_id)) && (
+                          <Tag color="gold">{t("registry.recentlyChanged")}</Tag>
+                        )}
+                      </span>
+                    ),
+                  },
+                  {
+                    title: t("common.updatedAt"),
+                    dataIndex: "last_synced_at",
+                    render: (v: string | null) => (v ? formatDateTime(v) : t("common.notSyncedYet")),
+                  },
+                ]}
+              />
+            );
+          },
+        }}
         columns={[
           {
             title: t("common.name"),
@@ -125,53 +177,14 @@ export default function RegistryMcps() {
               </div>
             ),
           },
+          { title: t("common.category"), dataIndex: "category", render: (v: string | null) => v ?? "—" },
           {
-            title: "Host",
-            dataIndex: "host",
-            render: (v: string) => <span style={{ fontFamily: "monospace", fontSize: 12.5 }}>{v}</span>,
-          },
-          {
-            title: t("common.status"),
-            dataIndex: "status",
-            render: (s: Mcp["status"]) =>
-              s === "available" ? (
-                <Tag color="green">{t("registry.available")}</Tag>
-              ) : (
-                <Tag color="red">{t("registry.unavailable")}</Tag>
-              ),
-          },
-          {
-            title: t("common.updatedAt"),
-            dataIndex: "updated_at",
-            render: (v: string) => formatDateTime(v),
+            title: t("registry.fabCount"),
+            dataIndex: "fabs",
+            render: (fabs: McpFab[]) => `${fabs.filter((f) => f.status === "available").length} / ${fabs.length}`,
           },
         ]}
       />
-
-      <Modal
-        title={t("registry.addMcp")}
-        open={createOpen}
-        onCancel={() => setCreateOpen(false)}
-        onOk={() => form.submit()}
-        confirmLoading={createMutation.isPending}
-        okText={t("common.create")}
-        cancelText={t("common.cancel")}
-      >
-        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item label={t("common.name")} name="name" rules={[{ required: true }]}>
-            <Input placeholder="finance-db-mcp" />
-          </Form.Item>
-          <Form.Item label={t("registry.versionLabel")} name="version" rules={[{ required: true }]}>
-            <Input placeholder="1.0.0" />
-          </Form.Item>
-          <Form.Item label="Host" name="host" rules={[{ required: true }]}>
-            <Input placeholder="mcp://finance.internal:8443" />
-          </Form.Item>
-          <Form.Item label={t("common.category")} name="category">
-            <Input placeholder="finance" />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 }

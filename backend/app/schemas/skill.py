@@ -24,9 +24,14 @@ class SkillRead(BaseModel):
     updated_at: datetime
 
 
+class SkillSyncItem(SkillRead):
+    # True when `status` flipped during the sync run this item came back from.
+    changed: bool
+
+
 class SkillSyncResult(BaseModel):
     synced_at: datetime
     total: int
     available: int
     unavailable: int
-    items: list[SkillRead]
+    items: list[SkillSyncItem]

@@ -4,6 +4,7 @@ import AppLayout from "./components/AppLayout";
 import AdminAgents from "./pages/AdminAgents";
 import AdminAgentSummary from "./pages/AdminAgentSummary";
 import AdminAgentTemplates from "./pages/AdminAgentTemplates";
+import AdminFabs from "./pages/AdminFabs";
 import AdminReviewSummary from "./pages/AdminReviewSummary";
 import AdminSkillHubRegistry from "./pages/AdminSkillHubRegistry";
 import AdminStats from "./pages/AdminStats";
@@ -15,6 +16,7 @@ import Login from "./pages/Login";
 import MyAgents from "./pages/MyAgents";
 import RegistryMcps from "./pages/RegistryMcps";
 import RegistryModels from "./pages/RegistryModels";
+import RegistrySkills from "./pages/RegistrySkills";
 import ReviewDetail from "./pages/ReviewDetail";
 import ReviewQueue from "./pages/ReviewQueue";
 import Reviews from "./pages/Reviews";
@@ -51,6 +53,7 @@ export default function App() {
           }
         />
         <Route path="/skills" element={<Skills />} />
+        <Route path="/registry/skills" element={<RegistrySkills />} />
         <Route path="/registry/mcps" element={<RegistryMcps />} />
         <Route path="/registry/models" element={<RegistryModels />} />
         <Route
@@ -98,6 +101,14 @@ export default function App() {
           element={
             <ProtectedRoute requireAdmin>
               <AdminSkillHubRegistry />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/fabs"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminFabs />
             </ProtectedRoute>
           }
         />

@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     ai_models,
     auth,
     dependencies,
+    fabs,
     mcps,
     registry,
     reviews,
@@ -26,3 +27,4 @@ api_router.include_router(mcps.router)
 api_router.include_router(admin.router)
 api_router.include_router(registry.router)
 api_router.include_router(ai_models.router)
+api_router.include_router(fabs.router)

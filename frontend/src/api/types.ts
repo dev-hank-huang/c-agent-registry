@@ -260,6 +260,23 @@ export interface Skill {
   updated_at: string;
 }
 
+export interface Fab {
+  id: string;
+  fab: string;
+}
+
+export interface McpFab {
+  mcp_id: string;
+  fab_id: string;
+  host: string;
+  status: AvailabilityStatus;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// host/status/last_synced_at moved to McpFab — an MCP is now deployed (and synced)
+// independently per fab rather than having one global host.
 export interface Mcp {
   id: string;
   name: string;
@@ -268,11 +285,9 @@ export interface Mcp {
   category: string | null;
   tags: string[];
   created_by: string;
-  host: string;
-  status: AvailabilityStatus;
-  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
+  fabs: McpFab[];
 }
 
 export interface SyncResult<T> {
@@ -282,6 +297,11 @@ export interface SyncResult<T> {
   unavailable: number;
   items: T[];
 }
+
+// `changed` is true when this row's `status` flipped during the sync run that
+// produced it — lets the frontend highlight exactly what a sync touched.
+export type SkillSyncItem = Skill & { changed: boolean };
+export type McpSyncItem = Mcp & { fabs: (McpFab & { changed: boolean })[] };
 
 export interface AIModel {
   id: string;

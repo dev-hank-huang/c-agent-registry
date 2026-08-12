@@ -460,8 +460,10 @@ export default function VersionDetail() {
               // picks up the same available-only filter on its legacy group now that
               // Skill carries a status field too.
               if (type === "mcp") {
+                // Availability moved to per-fab (McpFab) — an MCP is selectable here if
+                // it's reachable in at least one fab.
                 const mcpOptions = (mcpsQuery.data ?? [])
-                  .filter((m) => m.status === "available")
+                  .filter((m) => m.fabs.some((f) => f.status === "available"))
                   .map((m) => ({ value: `legacy:${m.id}`, label: `${m.name} v${m.version}` }));
                 return (
                   <Form.Item label="MCP" name="dependency_id" rules={[{ required: true }]}>
