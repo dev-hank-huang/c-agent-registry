@@ -6,7 +6,6 @@ import AdminAgentSummary from "./pages/AdminAgentSummary";
 import AdminAgentTemplates from "./pages/AdminAgentTemplates";
 import AdminFabs from "./pages/AdminFabs";
 import AdminReviewSummary from "./pages/AdminReviewSummary";
-import AdminSkillHubRegistry from "./pages/AdminSkillHubRegistry";
 import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
 import AdminUserSummary from "./pages/AdminUserSummary";
@@ -93,14 +92,6 @@ export default function App() {
           element={
             <ProtectedRoute requireAdmin>
               <AdminAgentTemplates />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/skillhub-registry"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminSkillHubRegistry />
             </ProtectedRoute>
           }
         />
