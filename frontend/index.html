@@ -1,6 +1,22 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function () {
+        // Kept in lockstep with resolveTheme() in
+        // frontend/src/theme/ThemeContext.tsx — both must resolve the same
+        // stored value + system preference to the same theme, or the page
+        // flashes the wrong theme between this script and React mounting.
+        var stored = localStorage.getItem("theme");
+        var resolved =
+          stored === "light" || stored === "dark"
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        document.documentElement.setAttribute("data-theme", resolved);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agent Registry</title>

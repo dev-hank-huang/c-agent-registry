@@ -15,6 +15,7 @@ import {
   Typography,
 } from "antd";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   deleteAgent,
@@ -28,8 +29,11 @@ import type { UpdateAgentInput } from "../api/agents";
 import type { AgentVersion } from "../api/types";
 import { createVersion, listVersions } from "../api/versions";
 import { AssetRoleTag, VersionStatusTag, VisibilityTag } from "../components/tags";
+import { useFormatters } from "../lib/relativeTime";
 
 export default function AgentDetail() {
+  const { t } = useTranslation();
+  const { formatDate, formatDateTime } = useFormatters();
   const { message } = App.useApp();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -60,53 +64,53 @@ export default function AgentDetail() {
   const inviteMutation = useMutation({
     mutationFn: (userId: string) => inviteMember(slug!, userId),
     onSuccess: () => {
-      message.success("已邀請為 editor");
+      message.success(t("agentDetail.inviteSuccess"));
       queryClient.invalidateQueries({ queryKey: ["agent-members", slug] });
       setInviteOpen(false);
       inviteForm.resetFields();
     },
-    onError: () => message.error("邀請失敗，請確認 user id 是否正確"),
+    onError: () => message.error(t("agentDetail.inviteFailed")),
   });
 
   const removeMutation = useMutation({
     mutationFn: (userId: string) => removeMember(slug!, userId),
     onSuccess: () => {
-      message.success("已移除成員");
+      message.success(t("agentDetail.removeMemberSuccess"));
       queryClient.invalidateQueries({ queryKey: ["agent-members", slug] });
     },
-    onError: () => message.error("移除失敗"),
+    onError: () => message.error(t("common.removeFailed")),
   });
 
   const createVersionMutation = useMutation({
     mutationFn: (url?: string) => createVersion(slug!, { url }),
     onSuccess: (version) => {
-      message.success("已建立草稿版本");
+      message.success(t("agentDetail.createVersionSuccess"));
       queryClient.invalidateQueries({ queryKey: ["agent-versions", slug] });
       setNewVersionOpen(false);
       versionForm.resetFields();
       navigate(`/agents/${slug}/versions/${version.slug}`);
     },
-    onError: () => message.error("建立版本失敗"),
+    onError: () => message.error(t("agentDetail.createVersionFailed")),
   });
 
   const updateMutation = useMutation({
     mutationFn: (input: UpdateAgentInput) => updateAgent(slug!, input),
     onSuccess: () => {
-      message.success("已更新 agent");
+      message.success(t("agentDetail.updateSuccess"));
       queryClient.invalidateQueries({ queryKey: ["agent", slug] });
       setEditOpen(false);
     },
-    onError: () => message.error("更新失敗"),
+    onError: () => message.error(t("agentDetail.updateFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteAgent(slug!),
     onSuccess: () => {
-      message.success("已刪除 agent");
+      message.success(t("agentDetail.deleteSuccess"));
       queryClient.invalidateQueries({ queryKey: ["agents"] });
       navigate("/my-agents");
     },
-    onError: () => message.error("刪除失敗"),
+    onError: () => message.error(t("agentDetail.deleteFailed")),
   });
 
   if (agentQuery.isLoading || !agentQuery.data) {
@@ -129,7 +133,7 @@ export default function AgentDetail() {
         <div>
           <Typography.Title level={3} style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 10 }}>
             {agent.name}
-            <span style={{ fontFamily: "monospace", fontSize: 12.5, fontWeight: 500, color: "#9AA0AC" }}>
+            <span style={{ fontFamily: "monospace", fontSize: 12.5, fontWeight: 500, color: "var(--fg-subtle)" }}>
               {agent.slug}
             </span>
             <VisibilityTag visibility={agent.visibility} />
@@ -139,14 +143,14 @@ export default function AgentDetail() {
               {agent.description}
             </Typography.Paragraph>
           )}
-          <div style={{ display: "flex", gap: 20, fontSize: 12.5, color: "#9AA0AC" }}>
+          <div style={{ display: "flex", gap: 20, fontSize: 12.5, color: "var(--fg-subtle)" }}>
             {agent.provider && (
               <div>
-                Provider：<b style={{ color: "#6B7280" }}>{agent.provider}</b>
+                {t("agentDetail.providerLabel")}<b style={{ color: "var(--fg-muted)" }}>{agent.provider}</b>
               </div>
             )}
             <div>
-              建立於：<b style={{ color: "#6B7280" }}>{new Date(agent.created_at).toLocaleDateString()}</b>
+              {t("agentDetail.createdAtLabel")}<b style={{ color: "var(--fg-muted)" }}>{formatDate(agent.created_at)}</b>
             </div>
           </div>
         </div>
@@ -162,23 +166,23 @@ export default function AgentDetail() {
               setEditOpen(true);
             }}
           >
-            編輯
+            {t("common.edit")}
           </Button>
           <Popconfirm
-            title="確定要刪除這個 agent 嗎？"
-            description="刪除後會從列表消失，但版本/審核紀錄不會被清除。"
+            title={t("agentDetail.deleteConfirmTitle")}
+            description={t("agentDetail.deleteConfirmDesc")}
             onConfirm={() => deleteMutation.mutate()}
-            okText="刪除"
+            okText={t("common.delete")}
             okButtonProps={{ danger: true }}
-            cancelText="取消"
+            cancelText={t("common.cancel")}
           >
             <Button danger loading={deleteMutation.isPending}>
-              刪除
+              {t("common.delete")}
             </Button>
           </Popconfirm>
-          <Button onClick={() => setInviteOpen(true)}>邀請成員</Button>
+          <Button onClick={() => setInviteOpen(true)}>{t("agentDetail.inviteMember")}</Button>
           <Button type="primary" onClick={() => setNewVersionOpen(true)}>
-            新增版本
+            {t("agentDetail.addVersion")}
           </Button>
         </div>
       </div>
@@ -193,24 +197,24 @@ export default function AgentDetail() {
           onClick: () => navigate(`/agents/${slug}/versions/${record.slug}`),
         })}
         style={{ marginBottom: 28 }}
-        locale={{ emptyText: "尚無版本，點右上角「新增版本」建立第一個草稿" }}
+        locale={{ emptyText: t("agentDetail.versionsEmpty") }}
         columns={[
-          { title: "版本", dataIndex: "version", render: (v: number) => `v${v}` },
-          { title: "狀態", dataIndex: "status", render: (s: AgentVersion["status"]) => <VersionStatusTag status={s} /> },
-          { title: "Streaming", dataIndex: "streaming", render: (v: boolean) => (v ? "是" : "否") },
+          { title: t("common.version"), dataIndex: "version", render: (v: number) => `v${v}` },
+          { title: t("common.status"), dataIndex: "status", render: (s: AgentVersion["status"]) => <VersionStatusTag status={s} /> },
+          { title: t("agentDetail.streamingCol"), dataIndex: "streaming", render: (v: boolean) => (v ? t("common.yes") : t("common.no")) },
           {
-            title: "更新時間",
+            title: t("common.updatedAt"),
             dataIndex: "updated_at",
-            render: (v: string) => new Date(v).toLocaleString(),
+            render: (v: string) => formatDateTime(v),
           },
         ]}
       />
 
       <Typography.Title level={5} style={{ marginBottom: 12 }}>
-        成員
+        {t("agentDetail.membersTitle")}
       </Typography.Title>
       {membersQuery.data && membersQuery.data.length > 0 ? (
-        <div style={{ background: "#fff", border: "1px solid #E4E6EC", borderRadius: 8 }}>
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 8 }}>
           {membersQuery.data.map((m, idx) => (
             <div
               key={m.id}
@@ -219,26 +223,26 @@ export default function AgentDetail() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "13px 18px",
-                borderBottom: idx === membersQuery.data.length - 1 ? "none" : "1px solid #E4E6EC",
+                borderBottom: idx === membersQuery.data.length - 1 ? "none" : "1px solid var(--border-default)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Avatar size={22} style={{ background: "#EEF0FE", color: "#4338CA", fontSize: 10 }}>
+                <Avatar size={22} style={{ background: "var(--color-brand-tint)", color: "var(--fg-on-brand-tint)", fontSize: 10 }}>
                   {m.user_id.slice(0, 1).toUpperCase()}
                 </Avatar>
-                <span style={{ fontSize: 12.5, fontFamily: "monospace", color: "#6B7280" }}>{m.user_id}</span>
+                <span style={{ fontSize: 12.5, fontFamily: "monospace", color: "var(--fg-muted)" }}>{m.user_id}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <AssetRoleTag role={m.role} />
                 {m.role !== "owner" && (
                   <Popconfirm
-                    title="確定要移除這個成員嗎？"
+                    title={t("agentDetail.removeMemberConfirmTitle")}
                     onConfirm={() => removeMutation.mutate(m.user_id)}
-                    okText="移除"
-                    cancelText="取消"
+                    okText={t("common.remove")}
+                    cancelText={t("common.cancel")}
                   >
                     <Button size="small" type="text" danger>
-                      移除
+                      {t("common.remove")}
                     </Button>
                   </Popconfirm>
                 )}
@@ -247,23 +251,23 @@ export default function AgentDetail() {
           ))}
         </div>
       ) : (
-        <Empty description="尚無成員資料" />
+        <Empty description={t("agentDetail.membersEmpty")} />
       )}
 
       <Modal
-        title="編輯 Agent"
+        title={t("agentDetail.editModalTitle")}
         open={editOpen}
         onCancel={() => setEditOpen(false)}
         onOk={() => editForm.submit()}
         confirmLoading={updateMutation.isPending}
-        okText="儲存"
-        cancelText="取消"
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
       >
         <Form form={editForm} layout="vertical" onFinish={(v) => updateMutation.mutate(v)}>
-          <Form.Item label="名稱" name="name" rules={[{ required: true, message: "請輸入名稱" }]}>
+          <Form.Item label={t("common.name")} name="name" rules={[{ required: true, message: t("common.nameRequired") }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="描述" name="description">
+          <Form.Item label={t("common.description")} name="description">
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item label="Provider" name="provider">
@@ -272,9 +276,9 @@ export default function AgentDetail() {
           <Form.Item label="Visibility" name="visibility" rules={[{ required: true }]}>
             <Select
               options={[
-                { value: "private", label: "private — 只有成員看得到" },
-                { value: "internal", label: "internal — 登入的使用者都看得到" },
-                { value: "public", label: "public — 對外公開" },
+                { value: "private", label: t("common.visibilityOptions.private") },
+                { value: "internal", label: t("common.visibilityOptions.internal") },
+                { value: "public", label: t("common.visibilityOptions.public") },
               ]}
             />
           </Form.Item>
@@ -282,20 +286,20 @@ export default function AgentDetail() {
       </Modal>
 
       <Modal
-        title="邀請成員"
+        title={t("agentDetail.inviteModalTitle")}
         open={inviteOpen}
         onCancel={() => setInviteOpen(false)}
         onOk={() => inviteForm.submit()}
         confirmLoading={inviteMutation.isPending}
-        okText="邀請"
-        cancelText="取消"
+        okText={t("agentDetail.inviteOk")}
+        cancelText={t("common.cancel")}
       >
         <Form form={inviteForm} layout="vertical" onFinish={(v) => inviteMutation.mutate(v.user_id)}>
           <Form.Item
             label="User ID"
             name="user_id"
-            rules={[{ required: true, message: "請輸入 user id" }]}
-            extra="邀請後對方會取得 editor 權限。可請 admin 在使用者管理頁查詢 user id。"
+            rules={[{ required: true, message: t("agentDetail.userIdRequired") }]}
+            extra={t("agentDetail.inviteExtra")}
           >
             <Input placeholder="00000000-0000-0000-0000-000000000000" />
           </Form.Item>
@@ -303,20 +307,19 @@ export default function AgentDetail() {
       </Modal>
 
       <Modal
-        title="新增版本"
+        title={t("agentDetail.addVersionModalTitle")}
         open={newVersionOpen}
         onCancel={() => setNewVersionOpen(false)}
         onOk={() => versionForm.submit()}
         confirmLoading={createVersionMutation.isPending}
-        okText="建立草稿"
-        cancelText="取消"
+        okText={t("agentDetail.createDraft")}
+        cancelText={t("common.cancel")}
       >
         <Form form={versionForm} layout="vertical" onFinish={(v) => createVersionMutation.mutate(v.url)}>
-          <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
-            這會建立一個草稿版本，之後可以在版本詳情頁自由編輯 URL、streaming、依賴等參數，
-            直到你自己按下「送審」才會正式送出去審核。
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 16, whiteSpace: "pre-line" }}>
+            {t("agentDetail.addVersionDesc")}
           </Typography.Paragraph>
-          <Form.Item label="Endpoint URL" name="url" extra="之後可以在版本詳情頁繼續編輯其他參數">
+          <Form.Item label="Endpoint URL" name="url" extra={t("agentDetail.endpointUrlExtra")}>
             <Input placeholder="https://agents.example.com/your-agent" />
           </Form.Item>
         </Form>

@@ -220,9 +220,9 @@
   --status-pending-border: #d99a3d;
   --status-success-fg: #34a85f;
   --status-success-border: #34a85f;
-  --status-success-solid-bg: #1f9455;
-  --status-danger-fg: #e2585b;
-  --status-danger-border: #e2585b;
+  --status-success-solid-bg: #15803d;
+  --status-danger-fg: #e76a6d;
+  --status-danger-border: #e76a6d;
   --status-info-fg: #5a94e8;
   --status-info-border: #5a94e8;
 
@@ -233,7 +233,7 @@
   --chart-cat-5: #e6659a;
   --chart-good: #34a85f;
   --chart-warning: #d99a3d;
-  --chart-critical: #e2585b;
+  --chart-critical: #e76a6d;
 
   --p-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
   --p-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);

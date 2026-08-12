@@ -8,24 +8,18 @@ import type {
   VersionStatus,
 } from "../api/types";
 
-const versionStatusConfig: Record<VersionStatus, { color: string; label: string }> = {
-  draft: { color: "default", label: "draft" },
-  submitted: { color: "processing", label: "submitted" },
-  in_review: { color: "processing", label: "in_review" },
-  approved: { color: "success", label: "approved" },
-  rejected: { color: "error", label: "rejected" },
-  active: { color: "success", label: "active" },
-  archived: { color: "default", label: "archived" },
+const versionStatusClass: Record<VersionStatus, string> = {
+  draft: "badge badge-neutral",
+  submitted: "badge badge-pending",
+  in_review: "badge badge-pending",
+  approved: "badge badge-success",
+  rejected: "badge badge-danger",
+  active: "badge badge-success-solid",
+  archived: "badge badge-neutral",
 };
 
 export function VersionStatusTag({ status }: { status: VersionStatus }) {
-  const cfg = versionStatusConfig[status];
-  const solid = status === "active";
-  return (
-    <Tag color={cfg.color} variant={solid ? "filled" : undefined}>
-      {cfg.label}
-    </Tag>
-  );
+  return <span className={versionStatusClass[status]}>{status}</span>;
 }
 
 const visibilityLabel: Record<AgentVisibility, string> = {
@@ -34,12 +28,14 @@ const visibilityLabel: Record<AgentVisibility, string> = {
   public: "public",
 };
 
+const visibilityClass: Record<AgentVisibility, string> = {
+  public: "badge badge-visibility-public",
+  internal: "badge badge-visibility-internal",
+  private: "badge badge-visibility-internal badge-visibility-private",
+};
+
 export function VisibilityTag({ visibility }: { visibility: AgentVisibility }) {
-  return (
-    <Tag color={visibility === "public" ? "blue" : "default"}>
-      {visibilityLabel[visibility]}
-    </Tag>
-  );
+  return <span className={visibilityClass[visibility]}>{visibilityLabel[visibility]}</span>;
 }
 
 export function AssetRoleTag({ role }: { role: AssetRole }) {
@@ -57,15 +53,19 @@ export function UserRoleTag({ role }: { role: UserRole }) {
 }
 
 export function UserStatusTag({ status }: { status: UserStatus }) {
-  return <Tag color={status === "active" ? "success" : "error"}>{status}</Tag>;
+  return (
+    <span className={status === "active" ? "badge badge-success" : "badge badge-danger"}>
+      {status}
+    </span>
+  );
 }
 
-const reviewResultColor: Record<ReviewResult, string> = {
-  pending: "default",
-  approved: "success",
-  rejected: "error",
+const reviewResultClass: Record<ReviewResult, string> = {
+  pending: "badge badge-pending",
+  approved: "badge badge-success",
+  rejected: "badge badge-danger",
 };
 
 export function ReviewResultTag({ result }: { result: ReviewResult }) {
-  return <Tag color={reviewResultColor[result]}>{result}</Tag>;
+  return <span className={reviewResultClass[result]}>{result}</span>;
 }

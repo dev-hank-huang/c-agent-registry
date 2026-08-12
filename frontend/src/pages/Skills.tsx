@@ -13,10 +13,14 @@ import {
 } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createMcp, createSkill, listMcps, listSkills } from "../api/skills";
 import type { CreateMcpInput, CreateSkillInput } from "../api/skills";
+import { useFormatters } from "../lib/relativeTime";
 
 export default function Skills() {
+  const { t } = useTranslation();
+  const { formatDateTime } = useFormatters();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
   const [skillModalOpen, setSkillModalOpen] = useState(false);
@@ -30,23 +34,23 @@ export default function Skills() {
   const createSkillMutation = useMutation({
     mutationFn: createSkill,
     onSuccess: () => {
-      message.success("Skill 已建立");
+      message.success(t("registry.createSuccess", { item: "Skill" }));
       queryClient.invalidateQueries({ queryKey: ["skills"] });
       setSkillModalOpen(false);
       skillForm.resetFields();
     },
-    onError: () => message.error("建立失敗"),
+    onError: () => message.error(t("common.createFailed")),
   });
 
   const createMcpMutation = useMutation({
     mutationFn: createMcp,
     onSuccess: () => {
-      message.success("MCP 已建立");
+      message.success(t("registry.createSuccess", { item: "MCP" }));
       queryClient.invalidateQueries({ queryKey: ["mcps"] });
       setMcpModalOpen(false);
       mcpForm.resetFields();
     },
-    onError: () => message.error("建立失敗"),
+    onError: () => message.error(t("common.createFailed")),
   });
 
   return (
@@ -56,7 +60,7 @@ export default function Skills() {
           <Typography.Title level={3} style={{ marginBottom: 4 }}>
             Skills &amp; MCP
           </Typography.Title>
-          <Typography.Text type="secondary">可重複使用、跨 agent 掛載的能力登錄。</Typography.Text>
+          <Typography.Text type="secondary">{t("registry.combinedDescription")}</Typography.Text>
         </div>
       </div>
 
@@ -69,7 +73,7 @@ export default function Skills() {
             children: (
               <>
                 <Button icon={<PlusOutlined />} onClick={() => setSkillModalOpen(true)} style={{ marginBottom: 12 }}>
-                  新增 Skill
+                  {t("registry.addSkill")}
                 </Button>
                 <Table
                   rowKey="id"
@@ -78,20 +82,20 @@ export default function Skills() {
                   pagination={false}
                   columns={[
                     {
-                      title: "名稱",
+                      title: t("common.name"),
                       dataIndex: "name",
                       render: (_: string, r) => (
                         <div>
                           <div style={{ fontWeight: 600 }}>{r.name}</div>
-                          <div style={{ color: "#9AA0AC", fontSize: 12 }}>v{r.version}</div>
+                          <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>v{r.version}</div>
                         </div>
                       ),
                     },
-                    { title: "分類", dataIndex: "category", render: (v: string | null) => v ?? "—" },
+                    { title: t("common.category"), dataIndex: "category", render: (v: string | null) => v ?? "—" },
                     {
-                      title: "更新時間",
+                      title: t("common.updatedAt"),
                       dataIndex: "updated_at",
-                      render: (v: string) => new Date(v).toLocaleString(),
+                      render: (v: string) => formatDateTime(v),
                     },
                   ]}
                 />
@@ -104,7 +108,7 @@ export default function Skills() {
             children: (
               <>
                 <Button icon={<PlusOutlined />} onClick={() => setMcpModalOpen(true)} style={{ marginBottom: 12 }}>
-                  新增 MCP
+                  {t("registry.addMcp")}
                 </Button>
                 <Table
                   rowKey="id"
@@ -113,12 +117,12 @@ export default function Skills() {
                   pagination={false}
                   columns={[
                     {
-                      title: "名稱",
+                      title: t("common.name"),
                       dataIndex: "name",
                       render: (_: string, r) => (
                         <div>
                           <div style={{ fontWeight: 600 }}>{r.name}</div>
-                          <div style={{ color: "#9AA0AC", fontSize: 12 }}>v{r.version}</div>
+                          <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>v{r.version}</div>
                         </div>
                       ),
                     },
@@ -128,9 +132,9 @@ export default function Skills() {
                       render: (v: string) => <span style={{ fontFamily: "monospace", fontSize: 12.5 }}>{v}</span>,
                     },
                     {
-                      title: "更新時間",
+                      title: t("common.updatedAt"),
                       dataIndex: "updated_at",
-                      render: (v: string) => new Date(v).toLocaleString(),
+                      render: (v: string) => formatDateTime(v),
                     },
                   ]}
                 />
@@ -141,13 +145,13 @@ export default function Skills() {
       />
 
       <Modal
-        title="新增 Skill"
+        title={t("registry.addSkill")}
         open={skillModalOpen}
         onCancel={() => setSkillModalOpen(false)}
         onOk={() => skillForm.submit()}
         confirmLoading={createSkillMutation.isPending}
-        okText="上傳"
-        cancelText="取消"
+        okText={t("registry.uploadOk")}
+        cancelText={t("common.cancel")}
       >
         <Form
           form={skillForm}
@@ -155,58 +159,58 @@ export default function Skills() {
           onFinish={(v) => {
             const file = v.file?.[0]?.originFileObj as File | undefined;
             if (!file) {
-              message.error("請選擇檔案");
+              message.error(t("common.selectFile"));
               return;
             }
             createSkillMutation.mutate({ ...v, file });
           }}
         >
-          <Form.Item label="名稱" name="name" rules={[{ required: true }]}>
+          <Form.Item label={t("common.name")} name="name" rules={[{ required: true }]}>
             <Input placeholder="pdf-ocr-extract" />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+          <Form.Item label={t("registry.versionLabel")} name="version" rules={[{ required: true }]}>
             <Input placeholder="1.0.0" />
           </Form.Item>
-          <Form.Item label="分類" name="category">
+          <Form.Item label={t("common.category")} name="category">
             <Input placeholder="extraction" />
           </Form.Item>
-          <Form.Item label="描述" name="description">
+          <Form.Item label={t("common.description")} name="description">
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item
-            label="檔案"
+            label={t("registry.fileLabel")}
             name="file"
             valuePropName="fileList"
             getValueFromEvent={(e) => e?.fileList}
-            rules={[{ required: true, message: "請選擇檔案" }]}
+            rules={[{ required: true, message: t("common.selectFile") }]}
           >
             <Upload beforeUpload={() => false} maxCount={1}>
-              <Button icon={<UploadOutlined />}>選擇檔案</Button>
+              <Button icon={<UploadOutlined />}>{t("registry.selectFileBtn")}</Button>
             </Upload>
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title="新增 MCP"
+        title={t("registry.addMcp")}
         open={mcpModalOpen}
         onCancel={() => setMcpModalOpen(false)}
         onOk={() => mcpForm.submit()}
         confirmLoading={createMcpMutation.isPending}
-        okText="建立"
-        cancelText="取消"
+        okText={t("common.create")}
+        cancelText={t("common.cancel")}
       >
         <Form form={mcpForm} layout="vertical" onFinish={(v) => createMcpMutation.mutate(v)}>
-          <Form.Item label="名稱" name="name" rules={[{ required: true }]}>
+          <Form.Item label={t("common.name")} name="name" rules={[{ required: true }]}>
             <Input placeholder="finance-db-mcp" />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+          <Form.Item label={t("registry.versionLabel")} name="version" rules={[{ required: true }]}>
             <Input placeholder="1.0.0" />
           </Form.Item>
           <Form.Item label="Host" name="host" rules={[{ required: true }]}>
             <Input placeholder="mcp://finance.internal:8443" />
           </Form.Item>
-          <Form.Item label="分類" name="category">
+          <Form.Item label={t("common.category")} name="category">
             <Input placeholder="finance" />
           </Form.Item>
         </Form>

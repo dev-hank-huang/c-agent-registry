@@ -1,12 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { decideReview, listReviewQueue } from "../api/reviews";
 import type { ReviewResult } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import Pagination from "../components/Pagination";
-import { formatFullDateTime } from "../lib/relativeTime";
+import { useFormatters } from "../lib/relativeTime";
 
 const STATUS_OPTIONS: { value: ReviewResult; label: string }[] = [
   { value: "pending", label: "Pending" },
@@ -15,6 +16,8 @@ const STATUS_OPTIONS: { value: ReviewResult; label: string }[] = [
 ];
 
 export default function ReviewQueue() {
+  const { t } = useTranslation();
+  const { formatDateTime } = useFormatters();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<ReviewResult>("pending");
@@ -65,7 +68,7 @@ export default function ReviewQueue() {
         Review Queue {data && <span className="badge">{data.total} total</span>}
       </h1>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-2)" }}>
-        待審核的 agent version 提交。管理員可以看到所有 reviewer 的項目；一般 reviewer 只看得到指派給自己的。
+        {t("reviewQueue.description")}
       </p>
 
       <div className="filter-bar">
@@ -84,7 +87,7 @@ export default function ReviewQueue() {
       </div>
 
       {!canView && (
-        <p style={{ color: "var(--status-danger-fg)" }}>只有 reviewer 或 admin 能看到 Review Queue。</p>
+        <p style={{ color: "var(--status-danger-fg)" }}>{t("reviewQueue.forbidden")}</p>
       )}
 
       {error && (
@@ -93,7 +96,7 @@ export default function ReviewQueue() {
 
       {canView && isLoading && <div className="loading-state">Loading…</div>}
 
-      {!isLoading && data && data.items.length === 0 && <div className="empty-state">目前沒有符合條件的項目</div>}
+      {!isLoading && data && data.items.length === 0 && <div className="empty-state">{t("reviewQueue.empty")}</div>}
 
       {!isLoading && data && data.items.length > 0 && (
         <div className="table-scroll">
@@ -125,7 +128,7 @@ export default function ReviewQueue() {
                     </span>
                     {item.signoff_by_name && (
                       <span style={{ color: "var(--fg-subtle)", fontSize: "var(--p-text-2xs)", marginLeft: "var(--p-space-1)" }}>
-                        by {item.signoff_by_name} · {formatFullDateTime(item.updated_at)}
+                        by {item.signoff_by_name} · {formatDateTime(item.updated_at)}
                       </span>
                     )}
                   </td>

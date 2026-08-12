@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { listAgents } from "../api/agents";
 import type { AgentSort } from "../api/types";
 import Avatar from "../components/Avatar";
 import Pagination from "../components/Pagination";
 import VisibilityBadge from "../components/VisibilityBadge";
-import { formatRelativeTime } from "../lib/relativeTime";
+import { useFormatters } from "../lib/relativeTime";
 
 const SORT_OPTIONS: { value: AgentSort; label: string }[] = [
   { value: "newest", label: "Newest" },
@@ -16,6 +17,8 @@ const SORT_OPTIONS: { value: AgentSort; label: string }[] = [
 ];
 
 export default function Browse() {
+  const { t } = useTranslation();
+  const { formatRelativeTime } = useFormatters();
   const [scope, setScope] = useState<"public" | "all">("public");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<AgentSort>("newest");
@@ -47,7 +50,7 @@ export default function Browse() {
     <div>
       <h1 style={{ fontSize: "var(--p-text-xl)", fontWeight: 700, margin: "0 0 4px" }}>Browse</h1>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-2)" }}>
-        瀏覽你有權限檢視的 agent。
+        {t("browse.description")}
       </p>
 
       <div className="filter-bar">
@@ -64,7 +67,7 @@ export default function Browse() {
             className={`toggle-btn ${scope === "all" ? "active" : ""}`}
             onClick={() => updateFilter(setScope)("all")}
           >
-            全部我看得到的
+            {t("browse.allVisible")}
           </button>
         </div>
         <div className="filter-search">
@@ -87,7 +90,7 @@ export default function Browse() {
 
       {isLoading && <div className="loading-state">Loading…</div>}
 
-      {!isLoading && visible.length === 0 && <div className="empty-state">目前沒有符合條件的 agent</div>}
+      {!isLoading && visible.length === 0 && <div className="empty-state">{t("browse.empty")}</div>}
 
       {!isLoading && visible.length > 0 && (
         <div className="agent-grid">

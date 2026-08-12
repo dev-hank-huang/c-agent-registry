@@ -2,11 +2,15 @@ import { PlusOutlined, SyncOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Form, Input, Modal, Switch, Table, Tag, Typography } from "antd";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createMcp, listMcps, syncMcps } from "../api/skills";
 import type { CreateMcpInput } from "../api/skills";
 import type { Mcp } from "../api/types";
+import { useFormatters } from "../lib/relativeTime";
 
 export default function RegistryMcps() {
+  const { t } = useTranslation();
+  const { formatDateTime } = useFormatters();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -18,21 +22,21 @@ export default function RegistryMcps() {
   const createMutation = useMutation({
     mutationFn: createMcp,
     onSuccess: () => {
-      message.success("MCP 已建立");
+      message.success(t("registry.createSuccess", { item: "MCP" }));
       queryClient.invalidateQueries({ queryKey: ["mcps"] });
       setCreateOpen(false);
       form.resetFields();
     },
-    onError: () => message.error("建立失敗"),
+    onError: () => message.error(t("common.createFailed")),
   });
 
   const syncMutation = useMutation({
     mutationFn: syncMcps,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["mcps"] });
-      message.success(`同步完成：${result.available} 個可用、${result.unavailable} 個不可用`);
+      message.success(t("registry.syncComplete", { available: result.available, unavailable: result.unavailable }));
     },
-    onError: () => message.error("同步失敗"),
+    onError: () => message.error(t("common.syncFailed")),
   });
 
   const lastSyncedAt = useMemo(() => {
@@ -61,7 +65,7 @@ export default function RegistryMcps() {
           <Typography.Title level={3} style={{ marginBottom: 4 }}>
             Registry · MCP
           </Typography.Title>
-          <Typography.Text type="secondary">可重複使用、跨 agent 掛載的 MCP 清單。</Typography.Text>
+          <Typography.Text type="secondary">{t("registry.mcpDescription")}</Typography.Text>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Button
@@ -69,10 +73,10 @@ export default function RegistryMcps() {
             loading={syncMutation.isPending}
             onClick={() => syncMutation.mutate()}
           >
-            同步
+            {t("registry.sync")}
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-            新增 MCP
+            {t("registry.addMcp")}
           </Button>
         </div>
       </div>
@@ -84,22 +88,22 @@ export default function RegistryMcps() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 12,
-          background: "#F7F8FA",
-          border: "1px solid #E4E6EC",
+          background: "var(--bg-surface-2)",
+          border: "1px solid var(--border-default)",
           borderRadius: 8,
           padding: "10px 14px",
           marginBottom: 16,
           fontSize: 13,
         }}
       >
-        <span style={{ color: "#5B6270" }}>
-          {lastSyncedAt ? `上次同步：${new Date(lastSyncedAt).toLocaleString()}` : "尚未同步"}
+        <span style={{ color: "var(--fg-muted)" }}>
+          {lastSyncedAt ? t("registry.lastSynced", { date: formatDateTime(lastSyncedAt) }) : t("common.notSyncedYet")}
           {" · "}
-          可用 {availableCount} · 不可用 {unavailableCount}
+          {t("registry.availableCount", { available: availableCount, unavailable: unavailableCount })}
         </span>
         <Switch
-          checkedChildren="顯示不可用項目"
-          unCheckedChildren="只顯示可用項目"
+          checkedChildren={t("registry.showUnavailable")}
+          unCheckedChildren={t("registry.showAvailableOnly")}
           checked={showUnavailable}
           onChange={setShowUnavailable}
         />
@@ -112,12 +116,12 @@ export default function RegistryMcps() {
         pagination={false}
         columns={[
           {
-            title: "名稱",
+            title: t("common.name"),
             dataIndex: "name",
             render: (_: string, r: Mcp) => (
               <div>
                 <div style={{ fontWeight: 600 }}>{r.name}</div>
-                <div style={{ color: "#9AA0AC", fontSize: 12 }}>v{r.version}</div>
+                <div style={{ color: "var(--fg-subtle)", fontSize: 12 }}>v{r.version}</div>
               </div>
             ),
           },
@@ -127,43 +131,43 @@ export default function RegistryMcps() {
             render: (v: string) => <span style={{ fontFamily: "monospace", fontSize: 12.5 }}>{v}</span>,
           },
           {
-            title: "狀態",
+            title: t("common.status"),
             dataIndex: "status",
             render: (s: Mcp["status"]) =>
               s === "available" ? (
-                <Tag color="green">可用</Tag>
+                <Tag color="green">{t("registry.available")}</Tag>
               ) : (
-                <Tag color="red">不可用</Tag>
+                <Tag color="red">{t("registry.unavailable")}</Tag>
               ),
           },
           {
-            title: "更新時間",
+            title: t("common.updatedAt"),
             dataIndex: "updated_at",
-            render: (v: string) => new Date(v).toLocaleString(),
+            render: (v: string) => formatDateTime(v),
           },
         ]}
       />
 
       <Modal
-        title="新增 MCP"
+        title={t("registry.addMcp")}
         open={createOpen}
         onCancel={() => setCreateOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={createMutation.isPending}
-        okText="建立"
-        cancelText="取消"
+        okText={t("common.create")}
+        cancelText={t("common.cancel")}
       >
         <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item label="名稱" name="name" rules={[{ required: true }]}>
+          <Form.Item label={t("common.name")} name="name" rules={[{ required: true }]}>
             <Input placeholder="finance-db-mcp" />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+          <Form.Item label={t("registry.versionLabel")} name="version" rules={[{ required: true }]}>
             <Input placeholder="1.0.0" />
           </Form.Item>
           <Form.Item label="Host" name="host" rules={[{ required: true }]}>
             <Input placeholder="mcp://finance.internal:8443" />
           </Form.Item>
-          <Form.Item label="分類" name="category">
+          <Form.Item label={t("common.category")} name="category">
             <Input placeholder="finance" />
           </Form.Item>
         </Form>

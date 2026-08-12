@@ -3,7 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { getRegistryOverview, triggerResync } from "../api/registry";
 import type { RegistrySource } from "../api/types";
 import StatCard from "../components/StatCard";
-import { formatFullDateTime, formatRelativeTime } from "../lib/relativeTime";
+import { useFormatters } from "../lib/relativeTime";
 
 export interface RegistryStatusPageProps {
   source: RegistrySource;
@@ -19,6 +19,7 @@ export interface RegistryStatusPageProps {
 // integration is wired in; until then every source legitimately reports zero items.
 export default function RegistryStatusPage({ source, title, description, itemLabel }: RegistryStatusPageProps) {
   const queryClient = useQueryClient();
+  const { formatRelativeTime, formatDateTime } = useFormatters();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-registry", source],
@@ -60,7 +61,7 @@ export default function RegistryStatusPage({ source, title, description, itemLab
             <StatCard
               value={data.status.last_synced_at ? formatRelativeTime(data.status.last_synced_at) : "Never"}
               label="Last synced"
-              breakdown={data.status.last_synced_at ? formatFullDateTime(data.status.last_synced_at) : undefined}
+              breakdown={data.status.last_synced_at ? formatDateTime(data.status.last_synced_at) : undefined}
             />
             <StatCard value={data.status.consecutive_failures} label="Consecutive sync failures" />
             <StatCard value={data.status.stale_count} label="Stale items" />

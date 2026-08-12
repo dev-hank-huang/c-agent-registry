@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { getUserSummary } from "../api/admin";
 import Leaderboard from "../components/Leaderboard";
@@ -11,6 +12,7 @@ const COLOR_DELETED = "var(--chart-critical)";
 // Aggregate/statistical view of user-management activity — for row-by-row actions
 // (edit role, toggle active/disabled, delete), see Users instead.
 export default function AdminUserSummary() {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-user-summary"],
     queryFn: getUserSummary,
@@ -21,9 +23,11 @@ export default function AdminUserSummary() {
 
   return (
     <div>
-      <h1 style={{ fontSize: "var(--p-text-xl)", fontWeight: 700, margin: "0 0 4px" }}>User Summary</h1>
+      <h1 style={{ fontSize: "var(--p-text-xl)", fontWeight: 700, margin: "0 0 4px" }}>{t("nav.userSummary")}</h1>
       <p style={{ color: "var(--fg-muted)", fontSize: "var(--p-text-sm)", margin: "0 0 var(--p-space-4)" }}>
-        整體使用者帳號的統計數據。要編輯角色、切換 active/disabled、或刪除帳號，請見 <Link to="/admin/users">Users</Link>。
+        <Trans i18nKey="adminUserSummary.description">
+          整體使用者帳號的統計數據。要編輯角色、切換 active/disabled、或刪除帳號，請見 <Link to="/admin/users">Users</Link>。
+        </Trans>
       </p>
 
       <div className="stat-grid">

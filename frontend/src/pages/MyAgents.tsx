@@ -2,6 +2,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Form, Input, Modal, Select, Typography } from "antd";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { createAgent, listAgents } from "../api/agents";
 import type { AgentVisibility } from "../api/types";
@@ -17,6 +18,7 @@ interface CreateAgentFormValues {
 }
 
 export default function MyAgents() {
+  const { t } = useTranslation();
   const { message } = App.useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -37,13 +39,13 @@ export default function MyAgents() {
   const createMutation = useMutation({
     mutationFn: createAgent,
     onSuccess: (agent) => {
-      message.success("Agent 已建立");
+      message.success(t("myAgents.createSuccess"));
       queryClient.invalidateQueries({ queryKey: ["agents"] });
       setModalOpen(false);
       form.resetFields();
       navigate(`/agents/${agent.slug}`);
     },
-    onError: () => message.error("建立失敗，slug 可能已被使用"),
+    onError: () => message.error(t("myAgents.createFailed")),
   });
 
   const mine = agents.filter((a) => a.created_by === user?.id);
@@ -55,23 +57,23 @@ export default function MyAgents() {
           <Typography.Title level={3} style={{ marginBottom: 4 }}>
             My Agents
           </Typography.Title>
-          <Typography.Text type="secondary">你建立的 agent。建立後即為擁有者（owner）。</Typography.Text>
+          <Typography.Text type="secondary">{t("myAgents.description")}</Typography.Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-          新增 Agent
+          {t("myAgents.addAgent")}
         </Button>
       </div>
 
       <AgentsTable agents={mine} loading={isLoading} />
 
       <Modal
-        title="新增 Agent"
+        title={t("myAgents.addAgent")}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={createMutation.isPending}
-        okText="建立"
-        cancelText="取消"
+        okText={t("common.create")}
+        cancelText={t("common.cancel")}
       >
         <Form<CreateAgentFormValues>
           form={form}
@@ -83,18 +85,18 @@ export default function MyAgents() {
             label="Slug"
             name="slug"
             rules={[
-              { required: true, message: "請輸入 slug" },
-              { pattern: /^[a-z0-9-]+$/, message: "只能用小寫英文、數字、連字號" },
+              { required: true, message: t("myAgents.slugRequired") },
+              { pattern: /^[a-z0-9-]+$/, message: t("myAgents.slugPattern") },
             ]}
-            extra="唯一識別碼，例如 invoice-extractor"
+            extra={t("myAgents.slugExtra")}
           >
             <Input placeholder="invoice-extractor" />
           </Form.Item>
-          <Form.Item label="名稱" name="name" rules={[{ required: true, message: "請輸入名稱" }]}>
+          <Form.Item label={t("common.name")} name="name" rules={[{ required: true, message: t("common.nameRequired") }]}>
             <Input placeholder="Invoice Extractor" />
           </Form.Item>
-          <Form.Item label="描述" name="description">
-            <Input.TextArea rows={2} placeholder="這個 agent 是做什麼的" />
+          <Form.Item label={t("common.description")} name="description">
+            <Input.TextArea rows={2} placeholder={t("myAgents.descriptionPlaceholder")} />
           </Form.Item>
           <Form.Item label="Provider" name="provider">
             <Input placeholder="OpenAI / Anthropic / Internal" />
@@ -102,9 +104,9 @@ export default function MyAgents() {
           <Form.Item label="Visibility" name="visibility" rules={[{ required: true }]}>
             <Select
               options={[
-                { value: "private", label: "private — 只有成員看得到" },
-                { value: "internal", label: "internal — 登入的使用者都看得到" },
-                { value: "public", label: "public — 對外公開" },
+                { value: "private", label: t("common.visibilityOptions.private") },
+                { value: "internal", label: t("common.visibilityOptions.internal") },
+                { value: "public", label: t("common.visibilityOptions.public") },
               ]}
             />
           </Form.Item>
