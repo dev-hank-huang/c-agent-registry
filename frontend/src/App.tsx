@@ -19,7 +19,6 @@ import RegistrySkills from "./pages/RegistrySkills";
 import ReviewDetail from "./pages/ReviewDetail";
 import ReviewQueue from "./pages/ReviewQueue";
 import Reviews from "./pages/Reviews";
-import Skills from "./pages/Skills";
 import SsoCallback from "./pages/SsoCallback";
 import VersionDetail from "./pages/VersionDetail";
 
@@ -51,7 +50,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/skills" element={<Skills />} />
         <Route path="/registry/skills" element={<RegistrySkills />} />
         <Route path="/registry/mcps" element={<RegistryMcps />} />
         <Route path="/registry/models" element={<RegistryModels />} />
