@@ -16,9 +16,7 @@ import MyAgents from "./pages/MyAgents";
 import RegistryMcps from "./pages/RegistryMcps";
 import RegistryModels from "./pages/RegistryModels";
 import RegistrySkills from "./pages/RegistrySkills";
-import ReviewDetail from "./pages/ReviewDetail";
 import ReviewQueue from "./pages/ReviewQueue";
-import Reviews from "./pages/Reviews";
 import SsoCallback from "./pages/SsoCallback";
 import VersionDetail from "./pages/VersionDetail";
 
@@ -39,8 +37,6 @@ export default function App() {
         <Route path="/my-agents" element={<MyAgents />} />
         <Route path="/agents/:slug" element={<AgentDetail />} />
         <Route path="/agents/:agentSlug/versions/:versionSlug" element={<VersionDetail />} />
-        <Route path="/reviews" element={<Reviews />} />
-        <Route path="/reviews/:reviewId" element={<ReviewDetail />} />
         <Route path="/review-queue" element={<ReviewQueue />} />
         <Route
           path="/admin/review-summary"

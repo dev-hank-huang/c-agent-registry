@@ -24,8 +24,9 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { listFabs, listSkills, listMcps } from "../api/skills";
 import { getRegistryOverview } from "../api/registry";
-import { listReviewerCandidates, listVersionReviews } from "../api/reviews";
+import { decideReview, listReviewerCandidates, listVersionReviews } from "../api/reviews";
 import type { AgentCardSkillEntry, DependencySource, DependencyType } from "../api/types";
+import { useAuth } from "../auth/AuthContext";
 import {
   activateVersion,
   addDependency,
@@ -47,6 +48,7 @@ export default function VersionDetail() {
   const { t } = useTranslation();
   const { formatDateTime } = useFormatters();
   const { message } = App.useApp();
+  const { user } = useAuth();
   const screens = Grid.useBreakpoint();
   const { agentSlug, versionSlug } = useParams<{ agentSlug: string; versionSlug: string }>();
   const queryClient = useQueryClient();
@@ -55,6 +57,7 @@ export default function VersionDetail() {
   const [submitForm] = Form.useForm<{ reviewer_ids: string[] }>();
   const [depForm] = Form.useForm<{ type: DependencyType; dependency_id: string }>();
   const [skillsForm] = Form.useForm<{ skills: AgentCardSkillEntry[] }>();
+  const [decisionComments, setDecisionComments] = useState<Record<string, string>>({});
   // checked[fab_id] -> url input value. Seeded from the saved agent_fabs once loaded
   // (see the useEffect below), then edited freely until "Save" is pressed.
   const [fabUrls, setFabUrls] = useState<Record<string, string>>({});
@@ -136,6 +139,16 @@ export default function VersionDetail() {
     () => new Map((skillhubRegistryQuery.data?.items ?? []).map((i) => [i.id, i.name])),
     [skillhubRegistryQuery.data],
   );
+  // Pending reviews the current user can act on right now — mirrors decide_review's
+  // own permission check (assigned reviewer, or admin overriding anyone's). Once the
+  // version leaves in_review (someone already decided), nothing is actionable even if
+  // a row is still technically "pending" (the other assigned reviewers never got to).
+  const actionableReviews = useMemo(() => {
+    if (!user || versionQuery.data?.status !== "in_review") return [];
+    return (reviewsQuery.data ?? []).filter(
+      (r) => r.result === "pending" && (r.reviewer_id === user.id || user.role === "admin"),
+    );
+  }, [reviewsQuery.data, versionQuery.data?.status, user]);
   const invalidateVersion = () => {
     queryClient.invalidateQueries({ queryKey: ["version", versionSlug] });
     queryClient.invalidateQueries({ queryKey: ["agent-versions", agentSlug] });
@@ -151,6 +164,20 @@ export default function VersionDetail() {
       submitForm.resetFields();
     },
     onError: () => message.error(t("versionDetail.submitFailed")),
+  });
+
+  const decisionMutation = useMutation({
+    mutationFn: ({ reviewId, result }: { reviewId: string; result: "approved" | "rejected" }) =>
+      decideReview(reviewId, result, decisionComments[reviewId]?.trim() || undefined),
+    onSuccess: () => {
+      message.success(t("versionDetail.decisionSuccess"));
+      invalidateVersion();
+      queryClient.invalidateQueries({ queryKey: ["version-reviews", versionSlug] });
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      message.error(msg ?? t("versionDetail.decisionFailed"));
+    },
   });
 
   const activateMutation = useMutation({
@@ -326,6 +353,70 @@ export default function VersionDetail() {
           title={t("versionDetail.rejectedAlertTitle")}
           description={t("versionDetail.rejectedAlertDesc")}
         />
+      )}
+
+      {actionableReviews.length > 0 && (
+        <div
+          style={{
+            background: "var(--card-bg)",
+            border: "1px solid var(--color-brand)",
+            borderRadius: 8,
+            padding: 20,
+            marginBottom: 18,
+          }}
+        >
+          <Typography.Title level={5} style={{ marginBottom: 6 }}>
+            {t("versionDetail.pendingDecisionTitle")}
+          </Typography.Title>
+          <Typography.Text type="secondary" style={{ fontSize: 12.5, display: "block", marginBottom: 14 }}>
+            {t("versionDetail.pendingDecisionDesc")}
+          </Typography.Text>
+          <Space orientation="vertical" style={{ width: "100%" }} size={16}>
+            {actionableReviews.map((r, idx) => {
+              const comment = decisionComments[r.id] ?? "";
+              const isMine = r.reviewer_id === user?.id;
+              return (
+                <div
+                  key={r.id}
+                  style={idx > 0 ? { borderTop: "1px solid var(--border-default)", paddingTop: 14 } : undefined}
+                >
+                  {!isMine && (
+                    <div style={{ fontSize: 12, color: "var(--fg-subtle)", marginBottom: 6 }}>
+                      {t("versionDetail.decidingAsAdminFor", { reviewer: r.reviewer_id.slice(0, 8) })}
+                    </div>
+                  )}
+                  <Input.TextArea
+                    rows={3}
+                    placeholder={t("versionDetail.decisionCommentPlaceholder")}
+                    value={comment}
+                    onChange={(e) => setDecisionComments((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                    style={{ marginBottom: 10 }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      loading={decisionMutation.isPending}
+                      onClick={() => decisionMutation.mutate({ reviewId: r.id, result: "approved" })}
+                    >
+                      {t("versionDetail.approve")}
+                    </Button>
+                    <Button
+                      danger
+                      loading={decisionMutation.isPending}
+                      disabled={!comment.trim()}
+                      onClick={() => decisionMutation.mutate({ reviewId: r.id, result: "rejected" })}
+                    >
+                      {t("versionDetail.reject")}
+                    </Button>
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {t("versionDetail.rejectRequiresComment")}
+                    </Typography.Text>
+                  </Space>
+                </div>
+              );
+            })}
+          </Space>
+        </div>
       )}
 
       <div

@@ -81,7 +81,6 @@ export default function AppLayout() {
     if (path.startsWith("/my-agents") || path.startsWith("/agents/")) return "my-agents";
     if (path.startsWith("/review-queue")) return "review-queue";
     if (path.startsWith("/admin/review-summary")) return "review-summary";
-    if (path.startsWith("/reviews")) return "my-reviews";
     if (path.startsWith("/registry/skills")) return "registry-skills";
     if (path.startsWith("/registry/mcps")) return "registry-mcps";
     if (path.startsWith("/registry/models")) return "registry-models";
@@ -120,7 +119,6 @@ export default function AppLayout() {
         ...(user.role === "admin"
           ? [{ key: "review-summary", label: t("nav.reviewSummary"), onClick: () => go("/admin/review-summary") }]
           : []),
-        { key: "my-reviews", label: t("nav.myReviews"), onClick: () => go("/reviews") },
       ],
     },
     ...(user.role === "admin"
